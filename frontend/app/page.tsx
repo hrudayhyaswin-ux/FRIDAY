@@ -49,6 +49,12 @@ interface SystemStatus {
   ollama_host: string;
 }
 
+interface MemoryFact {
+  key: string;
+  value: string;
+  created?: string;
+}
+
 export default function Home() {
   // Tabs: 'chat' | 'docs' | 'memory' | 'plugins' | 'system'
   const [activeTab, setActiveTab] = useState<string>("chat");
@@ -78,6 +84,11 @@ export default function Home() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
+  // SQLite Memory State (Phase 3)
+  const [memories, setMemories] = useState<MemoryFact[]>([]);
+  const [newMemKey, setNewMemKey] = useState<string>("");
+  const [newMemVal, setNewMemVal] = useState<string>("");
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom of chat
@@ -89,11 +100,19 @@ export default function Home() {
     scrollToBottom();
   }, [messages]);
 
-  // Fetch status and models on mount
+  // Fetch status, models, and memories on mount
   useEffect(() => {
     fetchSystemStatus();
     fetchModels();
+    fetchMemories();
   }, []);
+
+  // Sync memory when activeTab switches to memory
+  useEffect(() => {
+    if (activeTab === "memory") {
+      fetchMemories();
+    }
+  }, [activeTab]);
 
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -137,6 +156,51 @@ export default function Home() {
       }
     } catch (err: any) {
       addLog(`Models Fetch Failed: ${err.message}`);
+    }
+  };
+
+  const fetchMemories = async () => {
+    try {
+      addLog("Syncing offline SQLite memory core...");
+      const res = await fetch(`${API_BASE}/memory`);
+      if (!res.ok) throw new Error("Memory API error");
+      const data = await res.json();
+      setMemories(data);
+      addLog(`Loaded ${data.length} keys from SQLite.`);
+    } catch (err: any) {
+      addLog(`SQLite Fetch Failed: ${err.message}`);
+    }
+  };
+
+  const handleAddMemory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMemKey.trim() || !newMemVal.trim()) return;
+    try {
+      const res = await fetch(`${API_BASE}/memory`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: newMemKey, value: newMemVal })
+      });
+      if (!res.ok) throw new Error("Failed to add memory");
+      addLog(`Saved memory fact: ${newMemKey} -> ${newMemVal}`);
+      setNewMemKey("");
+      setNewMemVal("");
+      fetchMemories();
+    } catch (err: any) {
+      addLog(`Memory Save Error: ${err.message}`);
+    }
+  };
+
+  const handleDeleteMemory = async (key: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/memory/${key}`, {
+        method: "DELETE"
+      });
+      if (!res.ok) throw new Error("Failed to delete memory");
+      addLog(`Deleted memory fact: ${key}`);
+      fetchMemories();
+    } catch (err: any) {
+      addLog(`Memory Delete Error: ${err.message}`);
     }
   };
 
@@ -679,9 +743,34 @@ export default function Home() {
                   FRIDAY remembers user details, context, and persistent logs across sessions. The memory bank is structured around a local SQLite database that records conversation nodes, key facts about the user, and custom tags for long-term recall.
                 </p>
                 
+                {/* Add new memory fact */}
+                <form onSubmit={handleAddMemory} className="flex gap-2 bg-zinc-900/20 p-4 border border-zinc-800 rounded-lg">
+                  <input
+                    type="text"
+                    value={newMemKey}
+                    onChange={(e) => setNewMemKey(e.target.value)}
+                    placeholder="Fact key (e.g. favorite_color)"
+                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-pink-500/50"
+                  />
+                  <input
+                    type="text"
+                    value={newMemVal}
+                    onChange={(e) => setNewMemVal(e.target.value)}
+                    placeholder="Fact value (e.g. Purple)"
+                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-pink-500/50"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-1.5 rounded bg-gradient-to-r from-pink-500 to-rose-600 text-white font-bold hover:from-pink-400 hover:to-rose-500 text-xs transition"
+                  >
+                    Save Fact
+                  </button>
+                </form>
+
                 <div className="border border-zinc-800 rounded-lg overflow-hidden font-mono text-xs">
-                  <div className="bg-zinc-900 px-4 py-2 border-b border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-wider">
-                    Mock Database Memory Table
+                  <div className="bg-zinc-900/60 px-4 py-2 border-b border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-wider flex justify-between items-center">
+                    <span>SQLite Database Memory Table</span>
+                    <span className="text-[9px] text-pink-400 animate-pulse">● Live Connection</span>
                   </div>
                   <table className="w-full text-left bg-zinc-950/20">
                     <thead>
@@ -689,24 +778,32 @@ export default function Home() {
                         <th className="p-3">KEY</th>
                         <th className="p-3">VALUE</th>
                         <th className="p-3">CREATED</th>
+                        <th className="p-3 text-right">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="text-zinc-400 text-[11px]">
-                      <tr className="border-b border-zinc-900">
-                        <td className="p-3 font-semibold text-cyan-400">user_name</td>
-                        <td className="p-3">Administrator</td>
-                        <td className="p-3">2026-06-28</td>
-                      </tr>
-                      <tr className="border-b border-zinc-900">
-                        <td className="p-3 font-semibold text-cyan-400">preferred_style</td>
-                        <td className="p-3">Futuristic & High-Tech</td>
-                        <td className="p-3">2026-06-28</td>
-                      </tr>
-                      <tr>
-                        <td className="p-3 font-semibold text-cyan-400">offline_model_preference</td>
-                        <td className="p-3">Phi-3 Mini / Gemma 2 9B</td>
-                        <td className="p-3">2026-06-28</td>
-                      </tr>
+                      {memories.length > 0 ? (
+                        memories.map((mem) => (
+                          <tr key={mem.key} className="border-b border-zinc-900 hover:bg-zinc-900/10">
+                            <td className="p-3 font-semibold text-cyan-400">{mem.key}</td>
+                            <td className="p-3">{mem.value}</td>
+                            <td className="p-3 text-[10px] text-zinc-500">{mem.created ? new Date(mem.created).toLocaleDateString() : 'N/A'}</td>
+                            <td className="p-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteMemory(mem.key)}
+                                className="text-rose-500 hover:text-rose-400 transition font-sans text-[10px]"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={4} className="p-4 text-center text-zinc-600 italic">No facts stored in SQLite memory bank yet.</td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>

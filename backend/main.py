@@ -8,8 +8,13 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from core.config import settings
+from core.db import init_db
 from api.chat import router as chat_router
 from api.speech import router as speech_router
+from api.memory import router as memory_router
+
+# Initialize database
+init_db()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -29,6 +34,7 @@ app.add_middleware(
 # Register API routes
 app.include_router(chat_router, prefix=settings.API_V1_STR, tags=["chat"])
 app.include_router(speech_router, prefix=settings.API_V1_STR + "/speech", tags=["speech"])
+app.include_router(memory_router, prefix=settings.API_V1_STR + "/memory", tags=["memory"])
 
 @app.get("/")
 def read_root():
