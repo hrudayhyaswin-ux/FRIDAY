@@ -5,21 +5,30 @@ import os
 
 logger = logging.getLogger(__name__)
 
-class SpeechToText:
-    def __init__(self, model_name="tiny"):
-        logger.info(f"Loading Whisper model: {model_name}...")
-        # Use Metal Performance Shaders (MPS) if on Apple Silicon, else fallback to CPU
+class LazySpeechToText:
+    def __init__(self, model_name="base"):
+        self.model_name = model_name
+        self.model = None
+
+    def _load_model(self):
+        if self.model is not None:
+            return
+            
+        print(f"[Whisper STT] Loading Whisper model '{self.model_name}' lazily...", flush=True)
         device = "mps" if torch.backends.mps.is_available() else "cpu"
         try:
-            self.model = whisper.load_model(model_name, device=device)
-            logger.info(f"Whisper model loaded on {device}")
+            self.model = whisper.load_model(self.model_name, device=device)
+            print(f"[Whisper STT] Model loaded successfully on {device}!", flush=True)
         except Exception as e:
-            logger.error(f"Failed to load whisper model on {device}, falling back to cpu. Error: {e}")
-            self.model = whisper.load_model(model_name, device="cpu")
-            logger.info("Whisper model loaded on CPU")
+            print(f"[Whisper STT] Failed loading model on {device}, falling back to CPU: {e}", flush=True)
+            self.model = whisper.load_model(self.model_name, device="cpu")
+            print(f"[Whisper STT] Model loaded successfully on CPU!", flush=True)
 
     def transcribe(self, audio_file_path: str) -> str:
         try:
+            # Lazily load the model on the first request
+            self._load_model()
+            
             file_size = os.path.getsize(audio_file_path) if os.path.exists(audio_file_path) else 0
             print(f"[Whisper STT] Transcribing: {audio_file_path} | Size: {file_size} bytes", flush=True)
             
@@ -32,4 +41,4 @@ class SpeechToText:
             print(f"[Whisper STT] ERROR during transcription: {e}", flush=True)
             return ""
 
-stt_engine = SpeechToText(model_name="base")
+stt_engine = LazySpeechToText(model_name="base")
