@@ -369,7 +369,7 @@ export default function Home() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      // Select appropriate browser-supported MIME type
+      // Attempt to negotiate browser-preferred codecs
       let options = {};
       let mimeType = "audio/webm";
       
@@ -386,7 +386,15 @@ export default function Home() {
         }
       }
 
-      const mediaRecorder = new MediaRecorder(stream, options);
+      let mediaRecorder: MediaRecorder;
+      try {
+        mediaRecorder = new MediaRecorder(stream, options);
+      } catch (e) {
+        console.warn("MediaRecorder with options failed, falling back to default constructor:", e);
+        mediaRecorder = new MediaRecorder(stream);
+        mimeType = mediaRecorder.mimeType || "audio/webm";
+      }
+
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -397,8 +405,9 @@ export default function Home() {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-        await processAudioInput(audioBlob, mimeType);
+        const finalMimeType = mediaRecorder.mimeType || mimeType;
+        const audioBlob = new Blob(audioChunksRef.current, { type: finalMimeType });
+        await processAudioInput(audioBlob, finalMimeType);
         stream.getTracks().forEach(track => track.stop());
       };
 
