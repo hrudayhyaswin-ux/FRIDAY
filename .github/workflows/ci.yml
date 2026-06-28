@@ -35,7 +35,7 @@ jobs:
         cd backend
         pip install flake8
         # Stop on syntax errors
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=venv
 
   build:
     needs: lint
