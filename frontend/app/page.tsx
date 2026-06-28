@@ -19,7 +19,10 @@ import {
   Paperclip,
   Mic,
   AlertCircle,
-  HelpCircle
+  HelpCircle,
+  Square,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 
@@ -68,6 +71,12 @@ export default function Home() {
     "Initializing FRIDAY AI Core...",
     "Loading offline system variables...",
   ]);
+
+  // Voice Interaction State (Phase 2)
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [voiceMode, setVoiceMode] = useState<boolean>(true);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -131,11 +140,11 @@ export default function Home() {
     }
   };
 
-  const handleSend = async (e?: React.FormEvent) => {
+  const handleSend = async (e?: React.FormEvent, overrideText?: string) => {
     if (e) e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    const userMessageText = overrideText || input;
+    if (!userMessageText.trim() || isLoading) return;
 
-    const userMessageText = input;
     setInput("");
     
     const userMsg: Message = { role: "user", content: userMessageText };
@@ -190,6 +199,11 @@ export default function Home() {
         }
       }
       addLog("Stream finished successfully.");
+      
+      // Play TTS if voice mode is enabled
+      if (voiceMode && streamedResponse.trim()) {
+        playTTS(streamedResponse);
+      }
     } catch (error: any) {
       console.error(error);
       addLog(`LLM Query Error: ${error.message}`);
@@ -201,6 +215,87 @@ export default function Home() {
         return next;
       });
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const playTTS = async (text: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/speech/synthesize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+      if (!res.ok) throw new Error("TTS failed");
+      
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.play();
+    } catch (err: any) {
+      addLog(`TTS Error: ${err.message}`);
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        await processAudioInput(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      addLog("Microphone activated. Listening...");
+    } catch (err: any) {
+      addLog(`Microphone Error: ${err.message}`);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      addLog("Processing voice input...");
+    }
+  };
+
+  const processAudioInput = async (audioBlob: Blob) => {
+    setIsLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", audioBlob, "voice.webm");
+      
+      const res = await fetch(`${API_BASE}/speech/transcribe`, {
+        method: "POST",
+        body: formData
+      });
+      
+      if (!res.ok) throw new Error("Transcription failed");
+      const data = await res.json();
+      const transcribedText = data.text;
+      
+      if (transcribedText) {
+        addLog(`Transcribed: "${transcribedText}"`);
+        handleSend(undefined, transcribedText);
+      } else {
+        addLog("No speech detected.");
+        setIsLoading(false);
+      }
+    } catch (err: any) {
+      addLog(`STT Error: ${err.message}`);
       setIsLoading(false);
     }
   };
@@ -254,6 +349,16 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button 
+              onClick={() => {
+                setVoiceMode(!voiceMode);
+                addLog(`Voice synthesis ${!voiceMode ? 'enabled' : 'disabled'}`);
+              }}
+              className={`p-1.5 rounded-md ${voiceMode ? 'bg-cyan-500/20 text-cyan-400' : 'bg-zinc-800 text-zinc-500'} transition flex items-center justify-center`}
+              title="Toggle Voice Mode"
+            >
+              {voiceMode ? <Volume2 size={14} /> : <VolumeX size={14} />}
+            </button>
             <span className={`h-2 w-2 rounded-full ${status.ollama_connected ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]'}`} />
             <span className="text-[10px] font-mono text-zinc-400 uppercase">
               {status.ollama_connected ? "Local" : "Offline"}
@@ -494,13 +599,14 @@ export default function Home() {
                       disabled={isLoading}
                       className="flex-1 bg-transparent border-none outline-none text-sm text-zinc-200 placeholder-zinc-500 focus:ring-0"
                     />
+                    <div className="flex items-center px-2">
                     <button 
-                      type="button" 
-                      onClick={() => addLog("Continuous speech voice listener clicked (Phase 2 mock)")}
-                      className="text-zinc-500 hover:text-cyan-400 transition" 
-                      title="Voice Command (Phase 2)"
+                      type="button"
+                      onClick={isRecording ? stopRecording : startRecording}
+                      className={`${isRecording ? 'text-rose-500 animate-pulse' : 'text-zinc-500 hover:text-cyan-400'} transition`} 
+                      title={isRecording ? "Stop Recording" : "Voice Command (Phase 2)"}
                     >
-                      <Mic size={18} />
+                      {isRecording ? <Square size={18} /> : <Mic size={18} />}
                     </button>
                   </div>
                   <button
