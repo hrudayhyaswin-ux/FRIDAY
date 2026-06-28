@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Check, Copy } from "lucide-react";
 
 interface MarkdownRendererProps {
-  content: str;
+  content: string;
 }
 
 export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
