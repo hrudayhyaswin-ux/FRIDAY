@@ -6,7 +6,7 @@ import os
 logger = logging.getLogger(__name__)
 
 class LazySpeechToText:
-    def __init__(self, model_name="base"):
+    def __init__(self, model_name="tiny"):
         self.model_name = model_name
         self.model = None
 
@@ -32,7 +32,8 @@ class LazySpeechToText:
             file_size = os.path.getsize(audio_file_path) if os.path.exists(audio_file_path) else 0
             print(f"[Whisper STT] Transcribing: {audio_file_path} | Size: {file_size} bytes", flush=True)
             
-            result = self.model.transcribe(audio_file_path)
+            # Enforce English language to avoid multilingual hallucinations
+            result = self.model.transcribe(audio_file_path, language="en")
             text = result.get("text", "").strip()
             
             print(f"[Whisper STT] Decoded Text: '{text}'", flush=True)
@@ -41,4 +42,4 @@ class LazySpeechToText:
             print(f"[Whisper STT] ERROR during transcription: {e}", flush=True)
             return ""
 
-stt_engine = LazySpeechToText(model_name="base")
+stt_engine = LazySpeechToText(model_name="tiny")
