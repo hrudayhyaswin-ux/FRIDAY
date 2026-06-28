@@ -368,7 +368,25 @@ export default function Home() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      
+      // Select appropriate browser-supported MIME type
+      let options = {};
+      let mimeType = "audio/webm";
+      
+      if (typeof MediaRecorder !== "undefined") {
+        if (MediaRecorder.isTypeSupported("audio/webm")) {
+          options = { mimeType: "audio/webm" };
+          mimeType = "audio/webm";
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          options = { mimeType: "audio/mp4" };
+          mimeType = "audio/mp4";
+        } else if (MediaRecorder.isTypeSupported("audio/wav")) {
+          options = { mimeType: "audio/wav" };
+          mimeType = "audio/wav";
+        }
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -379,8 +397,8 @@ export default function Home() {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        await processAudioInput(audioBlob);
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        await processAudioInput(audioBlob, mimeType);
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -400,11 +418,13 @@ export default function Home() {
     }
   };
 
-  const processAudioInput = async (audioBlob: Blob) => {
+  const processAudioInput = async (audioBlob: Blob, mimeType: string) => {
     setIsLoading(true);
     try {
+      // Pick matching extension for backend parser
+      const ext = mimeType.includes("mp4") ? "mp4" : mimeType.includes("wav") ? "wav" : "webm";
       const formData = new FormData();
-      formData.append("file", audioBlob, "voice.webm");
+      formData.append("file", audioBlob, `voice.${ext}`);
       
       const res = await fetch(`${API_BASE}/speech/transcribe`, {
         method: "POST",

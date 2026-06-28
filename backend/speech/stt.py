@@ -19,8 +19,14 @@ class SpeechToText:
 
     def transcribe(self, audio_file_path: str) -> str:
         try:
+            file_size = os.path.getsize(audio_file_path) if os.path.exists(audio_file_path) else 0
+            logger.info(f"Transcribing file: {audio_file_path} ({file_size} bytes)")
+            
             result = self.model.transcribe(audio_file_path)
-            return result.get("text", "").strip()
+            text = result.get("text", "").strip()
+            
+            logger.info(f"Whisper Transcription Result: '{text}'")
+            return text
         except Exception as e:
             logger.error(f"Transcription failed: {e}")
             return ""
