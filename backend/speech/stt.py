@@ -1,6 +1,7 @@
 import whisper
 import logging
 import torch
+import os
 
 logger = logging.getLogger(__name__)
 
