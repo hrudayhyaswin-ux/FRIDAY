@@ -1,93 +1,463 @@
-# FRIDAY
+# FRIDAY AI
 
+> **A fully offline, CPU-powered AI voice assistant built for privacy, speed, and intelligence.**
 
+FRIDAY AI is an offline-first personal AI assistant inspired by virtual assistants like JARVIS and FRIDAY. Unlike cloud-based AI assistants, FRIDAY is designed to work entirely on your local machine without requiring an internet connection or API keys.
 
-## Getting started
+It combines local Large Language Models (LLMs), speech recognition, text-to-speech, memory, and modular plugins into a single intelligent assistant that can converse naturally, remember information, understand documents, and automate your computer.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+---
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+# Vision
 
-## Add your files
+Build an AI assistant that:
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+- 🎙️ Understands natural speech
+- 🧠 Remembers conversations
+- 💻 Runs completely offline
+- ⚡ Works on CPU (No GPU Required)
+- 🔒 Keeps all user data private
+- 📂 Understands documents
+- 🖥️ Controls your computer
+- 🔌 Supports plugins
+- 🌐 Can optionally support cloud AI in future versions
+
+---
+
+# Core Principles
+
+- Offline First
+- Privacy by Design
+- CPU Friendly
+- Modular Architecture
+- Open Source
+- Extensible
+- Cross Platform
+
+---
+
+# Features
+
+## AI Conversation
+
+- Local LLM powered conversations
+- Multi-turn conversations
+- Context aware responses
+- Markdown support
+- Code generation
+- Reasoning capabilities
+
+---
+
+## Voice Assistant
+
+- Wake word support (Future)
+- Speech-to-Text
+- Natural Text-to-Speech
+- Continuous listening mode
+- Voice interruption handling
+- Real-time conversation
+
+---
+
+## Memory
+
+FRIDAY remembers important information such as:
+
+- User preferences
+- Previous conversations
+- Projects
+- Important notes
+- Personal reminders
+- Frequently asked topics
+
+Memory is completely stored locally.
+
+---
+
+## Document Intelligence
+
+Upload files including
+
+- PDF
+- DOCX
+- TXT
+- Markdown
+- CSV
+
+FRIDAY can
+
+- Summarize
+- Explain
+- Search
+- Answer questions
+- Compare documents
+
+Everything happens locally.
+
+---
+
+## Computer Control
+
+FRIDAY can perform local actions like
+
+- Open applications
+- Create folders
+- Search files
+- Launch software
+- Take screenshots
+- Execute custom commands
+
+Future versions will include workflow automation.
+
+---
+
+## Plugin System
+
+Every major feature is implemented as a plugin.
+
+Example plugins
+
+- Calculator
+- File Manager
+- Notes
+- Calendar
+- Terminal
+- Camera
+- Music
+- Automation
+- OCR
+
+Developers can create custom plugins without modifying the core system.
+
+---
+
+# Architecture
 
 ```
-cd existing_repo
-git remote add origin https://code.swecha.org/hruday25/friday.git
-git branch -M main
-git push -uf origin main
+                   USER
+
+                     │
+      Voice / Text / Documents
+
+                     │
+
+           Input Processing Layer
+
+          ┌──────────┴──────────┐
+          │                     │
+     Speech Input          Text Input
+
+                     │
+
+             Intent Detection
+
+                     │
+
+             Local AI Router
+
+     ┌────────┬─────────┬────────┐
+     │        │         │        │
+   LLM     Memory    Plugins   Commands
+     │        │         │        │
+     └────────┴─────────┴────────┘
+
+               Response Engine
+
+                     │
+
+             Text To Speech
+
+                     │
+
+                    USER
 ```
 
-## Integrate with your tools
+---
 
-* [Set up project integrations](https://code.swecha.org/hruday25/friday/-/settings/integrations)
+# Technology Stack
 
-## Collaborate with your team
+## Frontend
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+- Next.js
+- React
+- Tailwind CSS
+- TypeScript
 
-## Test and Deploy
+---
 
-Use the built-in continuous integration in GitLab.
+## Backend
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+- Python
+- FastAPI
 
-***
+---
 
-# Editing this README
+## AI
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+- Ollama
+- llama.cpp
+- GGUF Models
 
-## Suggestions for a good README
+---
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+## Speech Recognition
 
-## Name
-Choose a self-explaining name for your project.
+- whisper.cpp
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+---
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## Text To Speech
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- Piper
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+---
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+## Vector Database
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+- FAISS
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+---
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+## Embeddings
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+- Sentence Transformers
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+---
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## Database
 
-## License
-For open source projects, say how it is licensed.
+- SQLite
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+---
+
+## File Processing
+
+- PyMuPDF
+- python-docx
+
+---
+
+## Automation
+
+- PyAutoGUI
+- psutil
+
+---
+
+# Folder Structure
+
+```
+FRIDAY-AI/
+
+├── frontend/
+│   ├── app/
+│   ├── components/
+│   ├── hooks/
+│   ├── lib/
+│   └── public/
+│
+├── backend/
+│   ├── api/
+│   ├── ai/
+│   ├── speech/
+│   ├── tts/
+│   ├── memory/
+│   ├── rag/
+│   ├── commands/
+│   ├── plugins/
+│   ├── database/
+│   ├── utils/
+│   └── core/
+│
+├── models/
+├── documents/
+├── knowledge/
+├── plugins/
+├── config/
+├── logs/
+├── tests/
+├── docker/
+└── README.md
+```
+
+---
+
+# AI Pipeline
+
+```
+User
+
+↓
+
+Voice or Text
+
+↓
+
+Speech Recognition
+
+↓
+
+Intent Detection
+
+↓
+
+AI Router
+
+↓
+
+Choose Module
+
+├── Conversation
+├── Memory
+├── Document Search
+├── Plugin
+└── Computer Command
+
+↓
+
+Generate Response
+
+↓
+
+Speech Output
+```
+
+---
+
+# Local AI Models
+
+Recommended CPU Models
+
+| Model | RAM Required | Performance |
+|---------|-------------|------------|
+| TinyLlama | 2 GB | Fast |
+| Phi-3 Mini | 4 GB | Excellent |
+| Qwen 2.5 3B | 5 GB | Excellent |
+| Gemma 3 4B | 6 GB | Very Good |
+
+---
+
+# Development Roadmap
+
+## Phase 1
+
+- Basic chat
+- Ollama integration
+- Local LLM
+- Website UI
+
+---
+
+## Phase 2
+
+- Voice interaction
+- Whisper.cpp
+- Piper
+- Wake word
+
+---
+
+## Phase 3
+
+- Long-term memory
+- SQLite
+- FAISS
+- Semantic search
+
+---
+
+## Phase 4
+
+- Document understanding
+- PDF support
+- File search
+- Local RAG
+
+---
+
+## Phase 5
+
+- Plugin system
+- Automation
+- Computer control
+- Cross-platform packaging
+
+---
+
+## Phase 6
+
+- Vision models
+- Camera support
+- OCR
+- Image understanding
+
+---
+
+## Future Goals
+
+- Offline AI Operating System
+- Desktop Application
+- Mobile Companion
+- Multi-Agent Architecture
+- Local Workflow Automation
+- Smart Home Integration
+- Optional Cloud AI Support
+- Self-Hosted Enterprise Edition
+
+---
+
+# Why FRIDAY?
+
+Unlike traditional AI assistants, FRIDAY prioritizes user privacy.
+
+No conversations leave your computer.
+
+No cloud processing is required.
+
+No subscriptions are necessary.
+
+Your data remains entirely under your control.
+
+---
+
+# Contributing
+
+Contributions are welcome.
+
+You can contribute by:
+
+- Reporting bugs
+- Improving documentation
+- Building plugins
+- Optimizing performance
+- Creating new features
+- Improving accessibility
+
+Please open an issue before submitting major changes.
+
+---
+
+# License
+
+This project will be released under the **MIT License**.
+
+---
+
+# Inspiration
+
+- Iron Man's JARVIS
+- Iron Man's FRIDAY
+- Open-source AI community
+- Privacy-first computing
+- Local LLM ecosystem
+
+---
+
+# Our Mission
+
+> **Create a personal AI assistant that belongs to you—not the cloud.**
+
+FRIDAY is built with one goal in mind:
+
+**Powerful AI. Complete privacy. Fully offline.**
