@@ -609,6 +609,7 @@ export default function Home() {
                       {isRecording ? <Square size={18} /> : <Mic size={18} />}
                     </button>
                   </div>
+                  </div>
                   <button
                     type="submit"
                     disabled={!input.trim() || isLoading}
