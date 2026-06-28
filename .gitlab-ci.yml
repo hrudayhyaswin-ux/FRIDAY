@@ -25,8 +25,8 @@ backend-lint:
 build-backend-docker:
   stage: build
   image: docker:20.10.16
-  services:
-    - docker:20.10.16-dind
+  variables:
+    DOCKER_HOST: unix:///var/run/docker.sock
   script:
     - cd backend
     - docker build -t friday-backend:latest .
@@ -35,8 +35,8 @@ build-backend-docker:
 build-frontend-docker:
   stage: build
   image: docker:20.10.16
-  services:
-    - docker:20.10.16-dind
+  variables:
+    DOCKER_HOST: unix:///var/run/docker.sock
   script:
     - cd frontend
     - docker build -t friday-frontend:latest .
