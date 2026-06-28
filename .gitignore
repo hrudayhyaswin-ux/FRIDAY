@@ -1,0 +1,19 @@
+# Python Backend
+backend/venv/
+**/__pycache__/
+**/*.pyc
+backend/friday.db
+backend/friday.db-journal
+
+# Next.js Frontend
+frontend/.next/
+frontend/node_modules/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnp/
+frontend/.pnp.js
+
+# OS Metadata
+.DS_Store
+Thumbs.db
