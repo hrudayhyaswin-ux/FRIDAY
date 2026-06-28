@@ -13,6 +13,7 @@ from api.chat import router as chat_router
 from api.speech import router as speech_router
 from api.memory import router as memory_router
 from api.docs import router as docs_router
+from api.plugins import router as plugins_router
 
 # Initialize database
 init_db()
@@ -37,6 +38,7 @@ app.include_router(chat_router, prefix=settings.API_V1_STR, tags=["chat"])
 app.include_router(speech_router, prefix=settings.API_V1_STR + "/speech", tags=["speech"])
 app.include_router(memory_router, prefix=settings.API_V1_STR + "/memory", tags=["memory"])
 app.include_router(docs_router, prefix=settings.API_V1_STR + "/docs", tags=["docs"])
+app.include_router(plugins_router, prefix=settings.API_V1_STR + "/plugins", tags=["plugins"])
 
 @app.get("/")
 def read_root():

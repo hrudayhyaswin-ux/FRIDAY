@@ -55,6 +55,14 @@ interface MemoryFact {
   created?: string;
 }
 
+interface PluginModule {
+  id: string;
+  name: string;
+  desc: string;
+  params: Record<string, string>;
+  status: string;
+}
+
 export default function Home() {
   // Tabs: 'chat' | 'docs' | 'memory' | 'plugins' | 'system'
   const [activeTab, setActiveTab] = useState<string>("chat");
@@ -94,6 +102,12 @@ export default function Home() {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Modular Plugins State (Phase 5)
+  const [plugins, setPlugins] = useState<PluginModule[]>([]);
+  const [volumeValue, setVolumeValue] = useState<number>(50);
+  const [openAppName, setOpenAppName] = useState<string>("");
+  const [systemStatsText, setSystemStatsText] = useState<string>("");
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom of chat
@@ -110,6 +124,7 @@ export default function Home() {
     fetchSystemStatus();
     fetchModels();
     fetchMemories();
+    fetchPlugins();
   }, []);
 
   // Sync memory when activeTab switches to memory
@@ -119,6 +134,9 @@ export default function Home() {
     }
     if (activeTab === "docs") {
       fetchUploadedFiles();
+    }
+    if (activeTab === "plugins") {
+      fetchPlugins();
     }
   }, [activeTab]);
 
@@ -262,6 +280,37 @@ export default function Home() {
       }
     } catch (err: any) {
       addLog(`RAG Clear Failed: ${err.message}`);
+    }
+  };
+
+  const fetchPlugins = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/plugins`);
+      if (res.ok) {
+        const data = await res.json();
+        setPlugins(data.plugins || []);
+      }
+    } catch (err) {
+      console.error("Error fetching plugins:", err);
+    }
+  };
+
+  const handleRunPlugin = async (action: string, params: Record<string, any> = {}) => {
+    addLog(`Invoking plugin action: ${action}...`);
+    try {
+      const res = await fetch(`${API_BASE}/plugins/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, params })
+      });
+      if (!res.ok) throw new Error("Plugin execution failed");
+      const data = await res.json();
+      addLog(`Plugin Response: ${data.message}`);
+      if (action === "system_stats") {
+        setSystemStatsText(data.message);
+      }
+    } catch (err: any) {
+      addLog(`Plugin Error: ${err.message}`);
     }
   };
 
@@ -955,23 +1004,127 @@ export default function Home() {
                   Extensible ecosystem allowing FRIDAY to invoke custom Python plugins and automate OS commands. When FRIDAY identifies a user intent matching a plugin function, it triggers the module (e.g. system controls, file browser, camera feed).
                 </p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  {[
-                    { name: "File Automation", desc: "Create, rename, or move files on host.", status: "Locked" },
-                    { name: "System Controller", desc: "Adjust volume, open apps, take screenshots.", status: "Locked" },
-                    { name: "Local Calculator", desc: "Precise computational engine bypass.", status: "Locked" },
-                    { name: "Notes & Reminders", desc: "Create markdown tasks and file notes.", status: "Locked" },
-                  ].map((p, idx) => (
-                    <div key={idx} className="p-4 bg-zinc-950/40 border border-zinc-800 rounded-lg flex items-center justify-between">
-                      <div>
-                        <h4 className="text-xs font-bold text-zinc-300">{p.name}</h4>
-                        <p className="text-[10px] text-zinc-500 mt-1">{p.desc}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                  {plugins.length > 0 ? (
+                    plugins.map((p) => (
+                      <div key={p.id} className="p-5 bg-zinc-950/40 border border-zinc-800 hover:border-zinc-700/60 rounded-xl space-y-4 transition flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-bold text-zinc-200">{p.name}</h4>
+                            <span className="px-2 py-0.5 rounded text-[8px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              {p.status}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-zinc-400 mt-1">{p.desc}</p>
+                        </div>
+                        
+                        {/* Interactive fields per plugin */}
+                        <div className="pt-2 border-t border-zinc-900 mt-auto">
+                          {p.id === "volume" && (
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="100"
+                                  value={volumeValue}
+                                  onChange={(e) => setVolumeValue(parseInt(e.target.value))}
+                                  className="flex-1 accent-emerald-500 bg-zinc-800 h-1 rounded-lg cursor-pointer"
+                                />
+                                <span className="text-[10px] font-mono text-zinc-300 w-8">{volumeValue}%</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRunPlugin("volume", { value: volumeValue })}
+                                className="w-full py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 transition"
+                              >
+                                Set Volume
+                              </button>
+                            </div>
+                          )}
+
+                          {p.id === "mute" && (
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleRunPlugin("mute")}
+                                className="flex-1 py-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-[10px] font-bold border border-zinc-800 transition"
+                              >
+                                Mute System
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRunPlugin("unmute")}
+                                className="flex-1 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 transition"
+                              >
+                                Unmute
+                              </button>
+                            </div>
+                          )}
+
+                          {p.id === "unmute" && (
+                            <button
+                              type="button"
+                              onClick={() => handleRunPlugin("unmute")}
+                              className="w-full py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 transition"
+                            >
+                              Unmute System
+                            </button>
+                          )}
+
+                          {p.id === "open_app" && (
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                value={openAppName}
+                                onChange={(e) => setOpenAppName(e.target.value)}
+                                placeholder="App name (Safari, Notes, Calculator...)"
+                                className="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-[10px] text-zinc-300 focus:outline-none focus:border-emerald-500/40 font-mono"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleRunPlugin("open_app", { app: openAppName })}
+                                className="w-full py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 transition"
+                              >
+                                Open Application
+                              </button>
+                            </div>
+                          )}
+
+                          {p.id === "screenshot" && (
+                            <button
+                              type="button"
+                              onClick={() => handleRunPlugin("screenshot")}
+                              className="w-full py-1.5 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 transition"
+                            >
+                              Capture Screen
+                            </button>
+                          )}
+
+                          {p.id === "system_stats" && (
+                            <div className="space-y-3">
+                              {systemStatsText && (
+                                <pre className="p-2.5 rounded bg-zinc-950 border border-zinc-900 text-[9px] text-zinc-400 font-mono overflow-x-auto leading-relaxed text-left">
+                                  {systemStatsText}
+                                </pre>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleRunPlugin("system_stats")}
+                                className="w-full py-1.5 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 transition"
+                              >
+                                {systemStatsText ? "Refresh Metrics" : "Query Stats"}
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <span className="px-2 py-0.5 rounded text-[8px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-600">
-                        {p.status}
-                      </span>
+                    ))
+                  ) : (
+                    <div className="col-span-2 py-8 text-center text-zinc-650 italic">
+                      Loading available system modules...
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
