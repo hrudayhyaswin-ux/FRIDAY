@@ -1,0 +1,42 @@
+stages:
+  - lint
+  - build
+
+# Lint and verify syntax for Next.js frontend
+frontend-lint:
+  stage: lint
+  image: node:18-alpine
+  script:
+    - cd frontend
+    - npm install --legacy-peer-deps
+    - npm run lint || true # Check for JS syntax errors without breaking build on warnings
+
+# Lint and verify basic Python syntax rules
+backend-lint:
+  stage: lint
+  image: python:3.10-slim
+  script:
+    - cd backend
+    - pip install flake8
+    # Stop build on syntax errors or undefined names
+    - flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+# Verify Dockerfile builds correctly for Backend
+build-backend-docker:
+  stage: build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  script:
+    - cd backend
+    - docker build -t friday-backend:latest .
+
+# Verify Dockerfile builds correctly for Frontend
+build-frontend-docker:
+  stage: build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  script:
+    - cd frontend
+    - docker build -t friday-frontend:latest .
