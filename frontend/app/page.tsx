@@ -231,7 +231,10 @@ export default function Home() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
-      audio.play();
+      audio.play().catch((e) => {
+        console.warn("Browser blocked audio playback:", e);
+        addLog("Audio playback blocked by browser. Please interact with the page first.");
+      });
     } catch (err: any) {
       addLog(`TTS Error: ${err.message}`);
     }
