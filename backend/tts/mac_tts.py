@@ -19,8 +19,8 @@ def synthesize_text(text: str) -> str:
     wav_path = os.path.join(temp_dir, f"{file_id}.wav")
     
     try:
-        # Use native macOS speech synthesizer
-        subprocess.run(["say", "-o", aiff_path, text], check=True)
+        # Use native macOS speech synthesizer explicitly requesting English voice "Samantha"
+        subprocess.run(["say", "-v", "Samantha", "-o", aiff_path, text], check=True)
         # Convert to WAV format for browser compatibility using ffmpeg
         subprocess.run(["ffmpeg", "-y", "-i", aiff_path, wav_path], check=True, capture_output=True)
         
