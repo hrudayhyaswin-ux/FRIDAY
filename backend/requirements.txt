@@ -3,3 +3,9 @@ uvicorn
 pydantic
 ollama
 python-multipart
+psutil
+openai-whisper
+torch
+pypdf
+python-docx
+lxml
