@@ -89,6 +89,11 @@ export default function Home() {
   const [newMemKey, setNewMemKey] = useState<string>("");
   const [newMemVal, setNewMemVal] = useState<string>("");
 
+  // Document Intel RAG State (Phase 4)
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom of chat
@@ -111,6 +116,9 @@ export default function Home() {
   useEffect(() => {
     if (activeTab === "memory") {
       fetchMemories();
+    }
+    if (activeTab === "docs") {
+      fetchUploadedFiles();
     }
   }, [activeTab]);
 
@@ -201,6 +209,59 @@ export default function Home() {
       fetchMemories();
     } catch (err: any) {
       addLog(`Memory Delete Error: ${err.message}`);
+    }
+  };
+
+  const fetchUploadedFiles = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/docs/files`);
+      if (res.ok) {
+        const data = await res.json();
+        setUploadedFiles(data.files || []);
+      }
+    } catch (err) {
+      console.error("Error fetching uploaded files:", err);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    addLog(`Uploading document: ${file.name}...`);
+    
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    try {
+      const res = await fetch(`${API_BASE}/docs/upload`, {
+        method: "POST",
+        body: formData
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      addLog(`Indexed '${file.name}' (${data.chunks_count} fragments stored locally)`);
+      fetchUploadedFiles();
+    } catch (err: any) {
+      addLog(`RAG Upload Failed: ${err.message}`);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleClearDocs = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/docs/clear`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        addLog("SQLite Vector Store cleared.");
+        fetchUploadedFiles();
+      }
+    } catch (err: any) {
+      addLog(`RAG Clear Failed: ${err.message}`);
     }
   };
 
@@ -693,7 +754,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* TAB 2: DOCUMENT INTEL (PHASE 4 PREVIEW) */}
+          {/* TAB 2: DOCUMENT INTEL (PHASE 4 ACTIVE) */}
           {activeTab === "docs" && (
             <div className="flex-1 p-8 overflow-y-auto max-w-4xl mx-auto space-y-6">
               <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/20 space-y-4">
@@ -703,25 +764,62 @@ export default function Home() {
                   </div>
                   <div>
                     <h2 className="text-base font-bold text-zinc-100">Document Intelligence & Local RAG</h2>
-                    <p className="text-xs text-zinc-400">Phase 4 Roadmap Preview</p>
+                    <p className="text-xs text-zinc-400">Phase 4 Active (Offline Vector Search)</p>
                   </div>
                 </div>
                 <p className="text-xs text-zinc-300 leading-relaxed">
-                  Analyze PDFs, DOCX, TXT, or CSV files completely locally. FRIDAY will chunk the document content, run it through the offline Sentence Transformers embeddings pipeline, store it inside a local FAISS vector database, and perform semantic lookup.
+                  Analyze PDFs, DOCX, TXT, CSV, or MD files completely locally. FRIDAY will chunk the document content, run it through the offline embeddings pipeline, store it inside a local vector database, and perform semantic lookup.
                 </p>
+
+                {/* Hidden File Input */}
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileUpload} 
+                  accept=".pdf,.docx,.doc,.txt,.csv,.md"
+                  className="hidden" 
+                />
+
                 <div className="p-8 border border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-center space-y-3 bg-zinc-950/40">
-                  <FileText size={32} className="text-zinc-600 animate-pulse" />
+                  <FileText size={32} className={`text-zinc-600 ${isUploading ? 'animate-bounce text-purple-400' : ''}`} />
                   <div>
-                    <p className="text-xs font-bold text-zinc-400">Drag and drop documents here</p>
-                    <p className="text-[10px] text-zinc-600 mt-1">Supports PDF, DOCX, TXT, CSV up to 50MB</p>
+                    <p className="text-xs font-bold text-zinc-400">
+                      {isUploading ? "Parsing & indexing document..." : "Select documents to index offline"}
+                    </p>
+                    <p className="text-[10px] text-zinc-600 mt-1">Supports PDF, DOCX, TXT, CSV, MD up to 50MB</p>
                   </div>
                   <button 
-                    disabled 
-                    className="px-4 py-1.5 rounded bg-zinc-800 border border-zinc-700 text-xs text-zinc-500 cursor-not-allowed"
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="px-4 py-1.5 rounded bg-purple-500/20 border border-purple-500/40 text-xs text-purple-300 hover:bg-purple-500/30 transition disabled:opacity-50"
                   >
-                    Select File (Locked)
+                    {isUploading ? "Uploading..." : "Select File"}
                   </button>
                 </div>
+
+                {/* Active Files List */}
+                {uploadedFiles.length > 0 && (
+                  <div className="border border-zinc-800 rounded-lg overflow-hidden font-mono text-xs mt-4">
+                    <div className="bg-zinc-900/60 px-4 py-2 border-b border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-wider flex justify-between items-center">
+                      <span>Indexed Document References ({uploadedFiles.length})</span>
+                      <button 
+                        onClick={handleClearDocs}
+                        className="text-[9px] text-rose-400 hover:text-rose-300 font-sans tracking-normal uppercase border border-rose-500/30 rounded px-1.5 py-0.5 bg-rose-500/10 hover:bg-rose-500/20 transition"
+                      >
+                        Wipe Index
+                      </button>
+                    </div>
+                    <ul className="divide-y divide-zinc-900 bg-zinc-950/20 text-zinc-400 p-2">
+                      {uploadedFiles.map((file, idx) => (
+                        <li key={idx} className="p-2 flex items-center gap-2 text-[11px]">
+                          <span className="text-purple-400">✔</span>
+                          <span>{file}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           )}

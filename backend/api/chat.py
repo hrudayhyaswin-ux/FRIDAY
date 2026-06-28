@@ -75,8 +75,29 @@ def chat(request: ChatRequest):
         # If DB fails, log it but proceed without memory context
         print(f"Memory retrieval failed: {e}")
 
-    # 2. Append the actual conversation messages
-    for msg in request.messages:
+    # 2. Append the actual conversation messages, injecting retrieval (RAG) context
+    rag_context = ""
+    try:
+        if request.messages:
+            last_msg = request.messages[-1]
+            if last_msg.role == "user":
+                from core.rag import rag_engine
+                # Query local document index
+                matches = rag_engine.query(last_msg.content, k=3)
+                if matches:
+                    rag_context = (
+                        "Relevant excerpts from uploaded user documents:\n\n"
+                        + "\n\n".join([f"[File: {m['filename']}] (Method: {m['method']}, Score: {m['score']:.2f})\n{m['text']}" for m in matches])
+                        + "\n\nUse this data to answer the user query if helpful. Keep it factual."
+                    )
+    except Exception as e:
+        print(f"RAG query lookup failed: {e}")
+
+    # 3. Compile final message list for LLM engine
+    for i, msg in enumerate(request.messages):
+        # Inject RAG system context directly before the last user message
+        if i == len(request.messages) - 1 and msg.role == "user" and rag_context:
+            formatted_messages.append({"role": "system", "content": rag_context})
         formatted_messages.append({"role": msg.role, "content": msg.content})
     
     def generate():
