@@ -98,8 +98,10 @@ export default function Home() {
   const [newMemVal, setNewMemVal] = useState<string>("");
 
   // Document Intel RAG State (Phase 4)
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [selectedDoc, setSelectedDoc] = useState<any | null>(null);
+  const [isLoadingDoc, setIsLoadingDoc] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Modular Plugins State (Phase 5)
@@ -232,13 +234,32 @@ export default function Home() {
 
   const fetchUploadedFiles = async () => {
     try {
-      const res = await fetch(`${API_BASE}/docs/files`);
+      const res = await fetch(`${API_BASE}/docs`);
       if (res.ok) {
         const data = await res.json();
-        setUploadedFiles(data.files || []);
+        setUploadedFiles(data.documents || []);
       }
     } catch (err) {
       console.error("Error fetching uploaded files:", err);
+    }
+  };
+
+  const fetchDocumentDetails = async (id: string) => {
+    setIsLoadingDoc(true);
+    addLog(`Retrieving structured intelligence for document ID: ${id}...`);
+    try {
+      const res = await fetch(`${API_BASE}/docs/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSelectedDoc(data);
+        addLog(`Loaded intelligence for: ${data.filename}`);
+      } else {
+        throw new Error("Failed to fetch document details");
+      }
+    } catch (err: any) {
+      addLog(`Failed loading document details: ${err.message}`);
+    } finally {
+      setIsLoadingDoc(false);
     }
   };
 
@@ -247,7 +268,7 @@ export default function Home() {
     if (!file) return;
     
     setIsUploading(true);
-    addLog(`Uploading document: ${file.name}...`);
+    addLog(`Uploading & analyzing document: ${file.name}...`);
     
     const formData = new FormData();
     formData.append("file", file);
@@ -259,7 +280,7 @@ export default function Home() {
       });
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json();
-      addLog(`Indexed '${file.name}' (${data.chunks_count} fragments stored locally)`);
+      addLog(`Indexed '${file.name}' (${data.chunks_count || 0} fragments stored locally)`);
       fetchUploadedFiles();
     } catch (err: any) {
       addLog(`RAG Upload Failed: ${err.message}`);
@@ -269,13 +290,34 @@ export default function Home() {
     }
   };
 
+  const handleDeleteDoc = async (id: string) => {
+    addLog(`Deleting document ID: ${id}...`);
+    try {
+      const res = await fetch(`${API_BASE}/docs/${id}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        addLog("Document deleted successfully.");
+        if (selectedDoc && selectedDoc.id === id) {
+          setSelectedDoc(null);
+        }
+        fetchUploadedFiles();
+      } else {
+        throw new Error("Delete request failed");
+      }
+    } catch (err: any) {
+      addLog(`Delete Error: ${err.message}`);
+    }
+  };
+
   const handleClearDocs = async () => {
     try {
       const res = await fetch(`${API_BASE}/docs/clear`, {
         method: "DELETE"
       });
       if (res.ok) {
-        addLog("SQLite Vector Store cleared.");
+        addLog("All database documents and vector indices wiped.");
+        setSelectedDoc(null);
         fetchUploadedFiles();
       }
     } catch (err: any) {
@@ -603,7 +645,7 @@ export default function Home() {
           </div>
           {models.length === 0 && (
             <p className="mt-2 text-[10px] text-rose-400 flex items-center gap-1">
-              <AlertCircle size={10} /> Running in demo/offline mode. Pull a model.
+              <AlertCircle size={10} /> Running in offline mode. Pull a model.
             </p>
           )}
         </div>
@@ -612,9 +654,9 @@ export default function Home() {
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {[
             { id: "chat", label: "Neural Chat", icon: MessageSquare, badge: null },
-            { id: "docs", label: "Document Intel", icon: FileText, badge: "Phase 4" },
-            { id: "memory", label: "SQLite Memory", icon: Database, badge: "Phase 3" },
-            { id: "plugins", label: "Modular Plugins", icon: Cpu, badge: "Phase 5" },
+            { id: "docs", label: "Document Intel", icon: FileText, badge: null },
+            { id: "memory", label: "SQLite Memory", icon: Database, badge: null },
+            { id: "plugins", label: "Modular Plugins", icon: Cpu, badge: null },
             { id: "system", label: "System Status", icon: Activity, badge: null },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -791,9 +833,9 @@ export default function Home() {
                   <div className="flex-1 flex items-center gap-2 bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 focus-within:border-cyan-500/50 rounded-xl px-4 py-2.5 transition">
                     <button 
                       type="button" 
-                      onClick={() => addLog("File attach requested (Phase 4 mock)")}
+                      onClick={() => fileInputRef.current?.click()}
                       className="text-zinc-500 hover:text-cyan-400 transition" 
-                      title="Attach documents (Phase 4)"
+                      title="Attach document to index"
                     >
                       <Paperclip size={18} />
                     </button>
@@ -810,7 +852,7 @@ export default function Home() {
                       type="button"
                       onClick={isRecording ? stopRecording : startRecording}
                       className={`${isRecording ? 'text-rose-500 animate-pulse' : 'text-zinc-500 hover:text-cyan-400'} transition`} 
-                      title={isRecording ? "Stop Recording" : "Voice Command (Phase 2)"}
+                      title={isRecording ? "Stop Recording" : "Voice Command"}
                     >
                       {isRecording ? <Square size={18} /> : <Mic size={18} />}
                     </button>
@@ -832,77 +874,261 @@ export default function Home() {
             </div>
           )}
 
-          {/* TAB 2: DOCUMENT INTEL (PHASE 4 ACTIVE) */}
+          {/* TAB 2: DOCUMENT INTEL */}
           {activeTab === "docs" && (
-            <div className="flex-1 p-8 overflow-y-auto max-w-4xl mx-auto space-y-6">
-              <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/20 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
-                    <FileText className="text-purple-400" size={20} />
+            <div className="flex-1 overflow-hidden p-6 flex flex-col md:flex-row gap-6">
+              
+              {/* LEFT SIDEBAR: Document List & Upload */}
+              <div className="w-full md:w-5/12 flex flex-col gap-4 overflow-y-auto pr-2">
+                <div className="p-5 rounded-xl border border-zinc-800 bg-zinc-900/20 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
+                      <FileText className="text-purple-400" size={20} />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-bold text-zinc-100">Local Knowledge Base</h2>
+                      <p className="text-xs text-zinc-500">Offline Extraction & Indexing</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-base font-bold text-zinc-100">Document Intelligence & Local RAG</h2>
-                    <p className="text-xs text-zinc-400">Phase 4 Active (Offline Vector Search)</p>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Upload documents (PDF, DOCX, TXT, MD), images for OCR, or audio for transcription. The offline pipeline chunks, embeds, indexes, and extracts structured insights locally on CPU.
+                  </p>
+
+                  {/* Hidden File Input */}
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileUpload} 
+                    accept=".pdf,.docx,.doc,.txt,.csv,.md,.png,.jpg,.jpeg,.tiff,.wav,.mp3,.ogg,.flac,.m4a,.webm"
+                    className="hidden" 
+                  />
+
+                  <div className="p-6 border border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-center space-y-3 bg-zinc-950/40 hover:border-purple-500/40 transition">
+                    <FileText size={28} className={`text-zinc-600 ${isUploading ? 'animate-bounce text-purple-400' : ''}`} />
+                    <div>
+                      <p className="text-xs font-bold text-zinc-300">
+                        {isUploading ? "Processing document..." : "Drag or select local files"}
+                      </p>
+                      <p className="text-[9px] text-zinc-500 mt-1">PDF, DOCX, TXT, MD, Images, Audio up to 50MB</p>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="px-4 py-1.5 rounded bg-purple-500/20 border border-purple-500/40 text-xs text-purple-300 hover:bg-purple-500/30 transition disabled:opacity-50"
+                    >
+                      {isUploading ? "Uploading..." : "Select File"}
+                    </button>
                   </div>
                 </div>
-                <p className="text-xs text-zinc-300 leading-relaxed">
-                  Analyze PDFs, DOCX, TXT, CSV, or MD files completely locally. FRIDAY will chunk the document content, run it through the offline embeddings pipeline, store it inside a local vector database, and perform semantic lookup.
-                </p>
 
-                {/* Hidden File Input */}
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleFileUpload} 
-                  accept=".pdf,.docx,.doc,.txt,.csv,.md"
-                  className="hidden" 
-                />
-
-                <div className="p-8 border border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-center space-y-3 bg-zinc-950/40">
-                  <FileText size={32} className={`text-zinc-600 ${isUploading ? 'animate-bounce text-purple-400' : ''}`} />
-                  <div>
-                    <p className="text-xs font-bold text-zinc-400">
-                      {isUploading ? "Parsing & indexing document..." : "Select documents to index offline"}
-                    </p>
-                    <p className="text-[10px] text-zinc-600 mt-1">Supports PDF, DOCX, TXT, CSV, MD up to 50MB</p>
-                  </div>
-                  <button 
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="px-4 py-1.5 rounded bg-purple-500/20 border border-purple-500/40 text-xs text-purple-300 hover:bg-purple-500/30 transition disabled:opacity-50"
-                  >
-                    {isUploading ? "Uploading..." : "Select File"}
-                  </button>
-                </div>
-
-                {/* Active Files List */}
-                {uploadedFiles.length > 0 && (
-                  <div className="border border-zinc-800 rounded-lg overflow-hidden font-mono text-xs mt-4">
-                    <div className="bg-zinc-900/60 px-4 py-2 border-b border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-wider flex justify-between items-center">
-                      <span>Indexed Document References ({uploadedFiles.length})</span>
+                {/* Document List */}
+                <div className="flex-1 flex flex-col min-h-[250px] border border-zinc-800 rounded-xl bg-zinc-950/20 overflow-hidden">
+                  <div className="bg-zinc-900/40 px-4 py-3 border-b border-zinc-800 flex justify-between items-center">
+                    <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">
+                      Indexed Documents ({uploadedFiles.length})
+                    </span>
+                    {uploadedFiles.length > 0 && (
                       <button 
                         onClick={handleClearDocs}
-                        className="text-[9px] text-rose-400 hover:text-rose-300 font-sans tracking-normal uppercase border border-rose-500/30 rounded px-1.5 py-0.5 bg-rose-500/10 hover:bg-rose-500/20 transition"
+                        className="text-[9px] text-rose-400 hover:text-rose-300 font-mono border border-rose-500/30 rounded px-2 py-0.5 bg-rose-500/10 hover:bg-rose-500/20 transition"
                       >
-                        Wipe Index
+                        WIPE ALL
                       </button>
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto divide-y divide-zinc-900">
+                    {uploadedFiles.length > 0 ? (
+                      uploadedFiles.map((doc) => {
+                        const isSelected = selectedDoc && selectedDoc.id === doc.id;
+                        return (
+                          <div 
+                            key={doc.id}
+                            onClick={() => fetchDocumentDetails(doc.id)}
+                            className={`p-3.5 flex flex-col gap-1.5 cursor-pointer transition ${
+                              isSelected 
+                                ? 'bg-purple-500/10 border-l-2 border-purple-500 text-zinc-100' 
+                                : 'hover:bg-zinc-900/40 text-zinc-400 hover:text-zinc-200'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-xs font-bold font-mono truncate">{doc.filename}</span>
+                              <span className={`px-1.5 py-0.5 rounded text-[8px] font-mono uppercase tracking-wider shrink-0 ${
+                                doc.status === "ready" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                                doc.status === "processing" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse" :
+                                "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                              }`}>
+                                {doc.status}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center text-[10px] font-mono text-zinc-500">
+                              <span>Size: {formatBytes(doc.file_size)}</span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteDoc(doc.id);
+                                }}
+                                className="text-rose-500/60 hover:text-rose-400 p-1 rounded hover:bg-rose-950/20 transition shrink-0"
+                                title="Delete Document"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-zinc-600 italic">
+                        <FileText size={24} className="mb-2 text-zinc-700" />
+                        <p className="text-xs">No documents uploaded yet.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT VIEW: Structured Knowledge Panel */}
+              <div className="flex-1 flex flex-col border border-zinc-800 bg-zinc-900/10 rounded-xl overflow-hidden h-full">
+                {isLoadingDoc ? (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-3">
+                    <div className="w-8 h-8 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
+                    <p className="text-xs text-zinc-400 font-mono">Decoding document insights offline...</p>
+                  </div>
+                ) : selectedDoc ? (
+                  <div className="flex-1 flex flex-col overflow-hidden h-full">
+                    {/* Header */}
+                    <div className="bg-zinc-900/40 p-4 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-purple-400"><Sparkles size={14} /></span>
+                          <h3 className="text-sm font-bold text-zinc-100">{selectedDoc.filename}</h3>
+                        </div>
+                        <p className="text-[10px] text-zinc-500 font-mono mt-1">
+                          ID: {selectedDoc.id} | Size: {formatBytes(selectedDoc.file_size)}
+                        </p>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[9px] font-mono bg-purple-500/10 text-purple-400 border border-purple-500/20 uppercase tracking-widest shrink-0 align-self-start sm:align-self-auto">
+                        Structured Intel Loaded
+                      </span>
                     </div>
-                    <ul className="divide-y divide-zinc-900 bg-zinc-950/20 text-zinc-400 p-2">
-                      {uploadedFiles.map((file, idx) => (
-                        <li key={idx} className="p-2 flex items-center gap-2 text-[11px]">
-                          <span className="text-purple-400">✔</span>
-                          <span>{file}</span>
-                        </li>
-                      ))}
-                    </ul>
+
+                    {/* Content Scroll Area */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-zinc-800/80">
+                      
+                      {/* Summary Section */}
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider">
+                          1. Executive Summary
+                        </h4>
+                        <div className="p-4 rounded-lg bg-zinc-950/40 border border-zinc-800/60 text-xs text-zinc-300 leading-relaxed font-sans">
+                          {selectedDoc.extracted_knowledge.summary ? (
+                            <MarkdownRenderer content={selectedDoc.extracted_knowledge.summary} />
+                          ) : (
+                            <p className="italic text-zinc-500">Summary generation pending or failed.</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Named Entities Section */}
+                      <div className="space-y-2.5">
+                        <h4 className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider">
+                          2. Extracted Entities
+                        </h4>
+                        {selectedDoc.extracted_knowledge.entities && selectedDoc.extracted_knowledge.entities.length > 0 ? (
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {["Person", "Organization", "Location", "Date"].map((type) => {
+                              const typedEntities = selectedDoc.extracted_knowledge.entities.filter(
+                                (e: any) => e.type === type
+                              );
+                              if (typedEntities.length === 0) return null;
+                              return (
+                                <div key={type} className="p-3 rounded-lg border border-zinc-800/60 bg-zinc-950/20 space-y-1.5">
+                                  <span className="text-[9px] font-mono font-bold text-purple-400 uppercase tracking-wider">
+                                    {type}s
+                                  </span>
+                                  <ul className="space-y-1 text-[10px] text-zinc-300 truncate">
+                                    {typedEntities.map((ent: any, i: number) => (
+                                      <li key={i} title={ent.name} className="truncate">• {ent.name}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="p-3 rounded-lg border border-zinc-850 bg-zinc-950/20 text-center text-zinc-500 italic text-[11px]">
+                            No entities detected in the text context.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Key Facts Section */}
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider">
+                          3. Key Facts & Insights
+                        </h4>
+                        {selectedDoc.extracted_knowledge.key_facts && selectedDoc.extracted_knowledge.key_facts.length > 0 ? (
+                          <ul className="space-y-1.5">
+                            {selectedDoc.extracted_knowledge.key_facts.map((fact: string, idx: number) => (
+                              <li key={idx} className="p-2.5 rounded border border-zinc-800/40 bg-zinc-950/20 text-xs text-zinc-300 flex items-start gap-2.5 leading-relaxed">
+                                <span className="text-purple-400 font-mono shrink-0">[{idx+1}]</span>
+                                <span>{fact}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="p-3 rounded-lg border border-zinc-850 bg-zinc-950/20 text-center text-zinc-500 italic text-[11px]">
+                            No key facts extracted.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Items Section */}
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider">
+                          4. Action Items & Next Steps
+                        </h4>
+                        {selectedDoc.extracted_knowledge.action_items && selectedDoc.extracted_knowledge.action_items.length > 0 ? (
+                          <ul className="space-y-1.5">
+                            {selectedDoc.extracted_knowledge.action_items.map((item: string, idx: number) => (
+                              <li key={idx} className="p-2.5 rounded border border-zinc-800/40 bg-zinc-950/20 text-xs text-zinc-300 flex items-center gap-3">
+                                <input 
+                                  type="checkbox" 
+                                  readOnly 
+                                  checked={false} 
+                                  className="rounded border-zinc-700 bg-zinc-800 text-purple-500 focus:ring-0 focus:ring-offset-0 h-3.5 w-3.5 shrink-0 cursor-pointer"
+                                />
+                                <span className="leading-relaxed">{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="p-3 rounded-lg border border-zinc-850 bg-zinc-950/20 text-center text-emerald-500/50 italic text-[11px]">
+                            ✔ No action items detected. Clean slate!
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-zinc-500 space-y-3">
+                    <Sparkles className="text-zinc-700 animate-pulse" size={32} />
+                    <div className="space-y-1 max-w-sm">
+                      <h4 className="text-xs font-bold text-zinc-400">Inspect Extracted Intelligence</h4>
+                      <p className="text-[11px] text-zinc-500 leading-relaxed">
+                        Select an uploaded document from the list to reveal local summaries, key concepts, named entities, checklist items, and outline metrics.
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
+
             </div>
           )}
 
-          {/* TAB 3: SQLITE MEMORY (PHASE 3 PREVIEW) */}
+          {/* TAB 3: SQLITE MEMORY */}
           {activeTab === "memory" && (
             <div className="flex-1 p-8 overflow-y-auto max-w-4xl mx-auto space-y-6">
               <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/20 space-y-4">
@@ -912,7 +1138,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h2 className="text-base font-bold text-zinc-100">Persistent SQLite Memory Core</h2>
-                    <p className="text-xs text-zinc-400">Phase 3 Roadmap Preview</p>
+                    <p className="text-xs text-zinc-400">Active facts & preference storage</p>
                   </div>
                 </div>
                 <p className="text-xs text-zinc-300 leading-relaxed">
@@ -987,7 +1213,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* TAB 4: MODULAR PLUGINS (PHASE 5 PREVIEW) */}
+          {/* TAB 4: MODULAR PLUGINS */}
           {activeTab === "plugins" && (
             <div className="flex-1 p-8 overflow-y-auto max-w-4xl mx-auto space-y-6">
               <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/20 space-y-4">
@@ -997,7 +1223,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h2 className="text-base font-bold text-zinc-100">Modular Python Plugins</h2>
-                    <p className="text-xs text-zinc-400">Phase 5 Roadmap Preview</p>
+                    <p className="text-xs text-zinc-400">Active system control & automation</p>
                   </div>
                 </div>
                 <p className="text-xs text-zinc-300 leading-relaxed">

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRIDAY - Hologram AI HUD</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Lucide Icons via CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <!-- Holographic Background Elements -->
+    <canvas id="background-canvas"></canvas>
+    <div class="scanline-overlay"></div>
+    <div class="screen-glare"></div>
+
+    <!-- Hidden native file input -->
+    <input type="file" id="file-uploader" style="display: none;" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.wav,.webm">
+
+    <!-- Main HUD Shell -->
+    <div class="app-container">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="brand-section">
+                <h1 class="brand-title">FRIDAY<span>.HUD</span></h1>
+            </div>
+
+            <!-- Glowing Tab Nav -->
+            <nav class="hud-tabs">
+                <button class="hud-tab active" data-target="chat">Neural Chat</button>
+                <button class="hud-tab" data-target="docs">Document Intel</button>
+                <button class="hud-tab" data-target="memory">SQLite Memory</button>
+                <button class="hud-tab" data-target="plugins">Modular Plugins</button>
+            </nav>
+            
+            <div class="system-status-indicator">
+                <div class="status-item">
+                    <span id="ollama-led" class="status-dot pulsing"></span>
+                    <span id="ollama-text">Ollama Active</span>
+                </div>
+                <div class="status-item">
+                    <i data-lucide="wifi-off" style="width:13px; color:#06b6d4;"></i>
+                    <span>Offline Mode</span>
+                </div>
+                <div class="status-item">
+                    <i data-lucide="cpu" style="width:13px; color:#6366f1;"></i>
+                    <span>Apple Host</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Left Panel: Systems Diagnostics OR File Indexer -->
+        <aside class="hud-panel hud-left">
+            <div class="panel-header">
+                <h3 id="left-panel-title" class="panel-title">SYSTEMS_DIAGNOSTICS</h3>
+                <i id="left-panel-icon" data-lucide="activity" style="width:14px; color:#06b6d4;"></i>
+            </div>
+            <div class="panel-body">
+                
+                <!-- SUB-PANEL 1: Default Systems Diagnostics (Active on Chat, Memory, Plugins tabs) -->
+                <div id="left-diag-panel" class="sub-panel active">
+                    <!-- CPU -->
+                    <div class="metric-row">
+                        <div class="metric-info">
+                            <span>CPU CORE TEMP</span>
+                            <span class="metric-value">32°C</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div id="cpu-bar" class="progress-fill" style="width: 42%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- RAM -->
+                    <div class="metric-row">
+                        <div class="metric-info">
+                            <span>L2 CACHE LOAD</span>
+                            <span class="metric-value">58%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div id="ram-bar" class="progress-fill" style="width: 58%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- SQLite Indexing -->
+                    <div class="metric-row">
+                        <div class="metric-info">
+                            <span>VECTOR CAPACITY</span>
+                            <span class="metric-value">81%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div id="index-bar" class="progress-fill" style="width: 81%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Circular Indicators -->
+                    <div class="diagnostics-grid">
+                        <div class="diagnostic-box">
+                            <div class="diagnostic-ring">
+                                <svg class="ring-svg" width="60" height="60">
+                                    <circle class="ring-bg" cx="30" cy="30" r="28"></circle>
+                                    <circle id="cpu-ring" class="ring-fill" cx="30" cy="30" r="28" style="stroke-dashoffset: 102;"></circle>
+                                </svg>
+                                <span class="ring-value">42%</span>
+                            </div>
+                            <span class="diagnostic-label">CORE_01</span>
+                        </div>
+                        
+                        <div class="diagnostic-box">
+                            <div class="diagnostic-ring">
+                                <svg class="ring-svg" width="60" height="60">
+                                    <circle class="ring-bg" cx="30" cy="30" r="28"></circle>
+                                    <circle id="ram-ring" class="ring-fill" cx="30" cy="30" r="28" style="stroke-dashoffset: 74;"></circle>
+                                </svg>
+                                <span class="ring-value">58%</span>
+                            </div>
+                            <span class="diagnostic-label">THREAD_02</span>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Model Config Core -->
+                    <div style="margin-top:5px; border-top:1px solid rgba(6,182,212,0.1); padding-top:10px;">
+                        <span class="mini-data-label" style="margin-bottom:6px; display:block;">Active LLM Engine</span>
+                        <select id="hud-model-select" class="cyber-model-select">
+                            <option value="">Detecting Ollama cores...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- SUB-PANEL 2: Document List & Ingestion (Active on Docs tab) -->
+                <div id="left-docs-panel" class="sub-panel">
+                    <div id="dropzone" class="cyber-uploader">
+                        <i data-lucide="upload-cloud" style="width:20px; color:#06b6d4; margin:0 auto;"></i>
+                        <div class="uploader-title">Ingest Document</div>
+                        <div class="uploader-subtitle">PDF, DOCX, TXT, MD, Images, Audio</div>
+                    </div>
+
+                    <div style="font-family:var(--font-hologram); font-size:10px; color:var(--cyan-glow); letter-spacing:1px;">
+                        INDEXED_DOCUMENTS:
+                    </div>
+
+                    <div id="hud-file-list" class="cyber-file-list">
+                        <!-- Dynamic files inserted here -->
+                        <div class="text-zinc-500 text-xs italic text-center py-4">No documents indexed yet.</div>
+                    </div>
+
+                    <button id="clear-docs-btn" class="cyber-btn cyber-btn-danger" style="width: 100%; margin-top:5px;">
+                        Wipe Document Database
+                    </button>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- Center Area: Reactive Hologram Core -->
+        <main class="hud-center">
+            <div class="hologram-container">
+                <canvas id="core-canvas"></canvas>
+                <div class="hologram-rings"></div>
+                <div class="hologram-rings-inner"></div>
+            </div>
+            
+            <h2 class="voice-core-title">FRIDAY Core v2.5</h2>
+            <p id="core-status" class="voice-core-sub">SECURE INTELLIGENCE</p>
+        </main>
+
+        <!-- Right Panel: Cyber Controls OR Details Panel -->
+        <aside class="hud-panel hud-right">
+            <div class="panel-header">
+                <h3 id="right-panel-title" class="panel-title">SYSTEM_CONTROLS</h3>
+                <i id="right-panel-icon" data-lucide="sliders" style="width:14px; color:#06b6d4;"></i>
+            </div>
+            <div class="panel-body">
+                
+                <!-- SUB-PANEL 1: Default System Controls & Logs (Active on Chat tab) -->
+                <div id="right-control-panel" class="sub-panel active">
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>SYNTHESIZER VOLUME</span>
+                            <span id="volume-val">50%</span>
+                        </div>
+                        <input type="range" id="volume-slider" class="cyber-slider" min="0" max="100" value="50">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>NEURAL ENCRYPT DEPTH</span>
+                            <span id="shield-val">75%</span>
+                        </div>
+                        <input type="range" id="shield-slider" class="cyber-slider" min="0" max="100" value="75">
+                    </div>
+
+                    <div class="switch-grid">
+                        <div id="audio-switch" class="cyber-switch active">
+                            <span>SPEECH OUTPUT</span>
+                            <div class="indicator-led"></div>
+                        </div>
+                        <div id="matrix-switch" class="cyber-switch active">
+                            <span>LOGSTREAM</span>
+                            <div class="indicator-led"></div>
+                        </div>
+                        <div id="vector-switch" class="cyber-switch active">
+                            <span>RAG CORE</span>
+                            <div class="indicator-led"></div>
+                        </div>
+                        <div class="cyber-switch active">
+                            <span>SHIELD GATE</span>
+                            <div class="indicator-led"></div>
+                        </div>
+                    </div>
+
+                    <div style="font-family:var(--font-hologram); font-size:10px; color:var(--cyan-glow); letter-spacing:1px; margin-top:5px;">
+                        LIVE_LOG_STREAM:
+                    </div>
+                    <div id="log-monitor" class="log-monitor">
+                        <!-- Dynamic logs stream in here -->
+                    </div>
+                </div>
+
+                <!-- SUB-PANEL 2: Document Details Viewer (Active on Docs tab) -->
+                <div id="right-details-panel" class="sub-panel">
+                    <div id="details-viewer-active" class="cyber-doc-viewer" style="display: none;">
+                        
+                        <!-- Summary -->
+                        <div class="viewer-section">
+                            <span class="viewer-section-title">1. Document Executive Summary</span>
+                            <div id="doc-summary" class="viewer-content-box" style="max-height:100px; overflow-y:auto;">
+                                Rendering summary...
+                            </div>
+                        </div>
+
+                        <!-- Entities -->
+                        <div class="viewer-section">
+                            <span class="viewer-section-title">2. Extracted Entities</span>
+                            <div id="doc-entities" class="entities-cloud">
+                                <!-- Tags dynamically loaded -->
+                            </div>
+                        </div>
+
+                        <!-- Key Facts -->
+                        <div class="viewer-section">
+                            <span class="viewer-section-title">3. Key Facts & Findings</span>
+                            <div id="doc-facts" class="viewer-content-box" style="max-height:100px; overflow-y:auto;">
+                                <!-- Bullets dynamically loaded -->
+                            </div>
+                        </div>
+
+                        <!-- Checklist -->
+                        <div class="viewer-section">
+                            <span class="viewer-section-title">4. Action Item Checklist</span>
+                            <div id="doc-checklist" class="checklist-list">
+                                <!-- Checkbox bullets -->
+                            </div>
+                        </div>
+
+                    </div>
+                    <div id="details-viewer-empty" class="text-zinc-500 text-xs italic text-center py-12">
+                        Select an indexed document to reveal local summaries, conceptual extractions, facts, and outline metrics.
+                    </div>
+                </div>
+
+                <!-- SUB-PANEL 3: SQLite Factual Memory bank (Active on Memory tab) -->
+                <div id="right-memory-panel" class="sub-panel">
+                    
+                    <!-- Form -->
+                    <form id="memory-form" class="cyber-memory-form">
+                        <input type="text" id="mem-key" class="cyber-input" placeholder="Tag Key (e.g. USER_NAME)" required>
+                        <input type="text" id="mem-val" class="cyber-input" placeholder="Fact / Data value" required>
+                        <button type="submit" class="cyber-btn">Log</button>
+                    </form>
+
+                    <div style="font-family:var(--font-hologram); font-size:10px; color:var(--cyan-glow); letter-spacing:1px;">
+                        LIVE_FACTUAL_RECALL:
+                    </div>
+
+                    <div id="hud-memory-list" class="memory-facts-list">
+                        <!-- SQLite memory list -->
+                    </div>
+
+                </div>
+
+                <!-- SUB-PANEL 4: Modular System Control Plugins (Active on Plugins tab) -->
+                <div id="right-plugins-panel" class="sub-panel">
+                    <p class="text-xs text-zinc-400">
+                        Trigger native system automations directly on your Mac. Subprocess executions utilize host permissions:
+                    </p>
+                    
+                    <div class="plugins-matrix">
+                        <!-- Volume Up -->
+                        <div class="plugin-widget">
+                            <div class="plugin-widget-header">
+                                <span class="plugin-widget-title">Increase Volume</span>
+                                <span class="plugin-widget-status">Host</span>
+                            </div>
+                            <p class="plugin-widget-desc">Raise host volume by 10%</p>
+                            <button class="cyber-btn run-plugin-btn" data-action="volume" data-param="up">Run Module</button>
+                        </div>
+                        
+                        <!-- Volume Down -->
+                        <div class="plugin-widget">
+                            <div class="plugin-widget-header">
+                                <span class="plugin-widget-title">Lower Volume</span>
+                                <span class="plugin-widget-status">Host</span>
+                            </div>
+                            <p class="plugin-widget-desc">Lower host volume by 10%</p>
+                            <button class="cyber-btn run-plugin-btn" data-action="volume" data-param="down">Run Module</button>
+                        </div>
+
+                        <!-- Toggle Mute -->
+                        <div class="plugin-widget">
+                            <div class="plugin-widget-header">
+                                <span class="plugin-widget-title">Toggle Mute</span>
+                                <span class="plugin-widget-status">Host</span>
+                            </div>
+                            <p class="plugin-widget-desc">Mute/unmute macOS sound</p>
+                            <button class="cyber-btn run-plugin-btn" data-action="mute">Run Module</button>
+                        </div>
+
+                        <!-- Capture Screenshot -->
+                        <div class="plugin-widget">
+                            <div class="plugin-widget-header">
+                                <span class="plugin-widget-title">Screenshot</span>
+                                <span class="plugin-widget-status">Host</span>
+                            </div>
+                            <p class="plugin-widget-desc">Capture Mac screen</p>
+                            <button class="cyber-btn run-plugin-btn" data-action="screenshot">Run Module</button>
+                        </div>
+
+                        <!-- Open Safari -->
+                        <div class="plugin-widget">
+                            <div class="plugin-widget-header">
+                                <span class="plugin-widget-title">Open Browser</span>
+                                <span class="plugin-widget-status">Host</span>
+                            </div>
+                            <p class="plugin-widget-desc">Launch Safari on Desktop</p>
+                            <button class="cyber-btn run-plugin-btn" data-action="open_app" data-param="Safari">Run Module</button>
+                        </div>
+
+                        <!-- Query system metrics -->
+                        <div class="plugin-widget">
+                            <div class="plugin-widget-header">
+                                <span class="plugin-widget-title">System Metrics</span>
+                                <span class="plugin-widget-status">Host</span>
+                            </div>
+                            <p class="plugin-widget-desc">Query active CPU/disk stats</p>
+                            <button class="cyber-btn run-plugin-btn" data-action="system_stats">Run Module</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- Bottom Panel: Cyber Terminal Console -->
+        <footer class="hud-panel hud-bottom">
+            <div class="terminal-monitor">
+                <div id="terminal-history" class="terminal-history">
+                    <!-- Command entries appear here -->
+                </div>
+                
+                <div class="terminal-prompt-row">
+                    <span class="terminal-indicator">guest@friday:~$</span>
+                    <input type="text" id="terminal-input" class="terminal-input" placeholder="Type or click Mic to speak..." autofocus autocomplete="off">
+                    <button id="terminal-mic-btn" type="button" class="trash-btn" style="color: var(--cyan-glow); padding: 4px 8px; margin-right: 5px;" title="Listen for voice command">
+                        <i data-lucide="mic" style="width:16px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bottom Right Stats Card -->
+            <div class="system-summary-card">
+                <div class="status-row-grid">
+                    <div class="mini-data-box">
+                        <span class="mini-data-label">LLM Core</span>
+                        <span id="summary-llm-val" class="mini-data-value">STANDBY</span>
+                    </div>
+                    <div class="mini-data-box">
+                        <span class="mini-data-label">DB Engine</span>
+                        <span class="mini-data-value" style="color:#10b981;">ONLINE</span>
+                    </div>
+                    <div class="mini-data-box">
+                        <span class="mini-data-label">V-Store</span>
+                        <span id="summary-vstore-val" class="mini-data-value">SYNCED</span>
+                    </div>
+                    <div class="mini-data-box">
+                        <span class="mini-data-label">Host Link</span>
+                        <span class="mini-data-value" style="color:#10b981;">NATIVE</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        lucide.createIcons();
+    </script>
+
+    <!-- App Module -->
+    <script type="module" src="app.js?v=3.0"></script>
+
+</body>
+</html>

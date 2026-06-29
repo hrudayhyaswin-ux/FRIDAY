@@ -54,6 +54,12 @@ def chat(request: ChatRequest):
     formatted_messages = []
     
     # 1. Fetch user memories from local SQLite database
+    system_prompt = (
+        "You are FRIDAY, an advanced AI assistant — sharp, precise, and direct like JARVIS from Iron Man. "
+        "ABSOLUTE RULE: Reply in 1-2 sentences MAXIMUM. No lists. No bullet points. No markdown. No explanations unless asked. "
+        "Be confident, technical, and concise. Never pad your answer. Get straight to the point."
+    )
+    
     try:
         from core.db import get_db_connection
         conn = get_db_connection()
@@ -64,16 +70,16 @@ def chat(request: ChatRequest):
         
         if rows:
             memory_rules = "\n".join([f"- {row['key']}: {row['value']}" for row in rows])
-            system_prompt = (
-                "You are FRIDAY, an offline AI assistant. "
-                "Here is critical context and memory you know about the user:\n"
+            system_prompt += (
+                f"\n\nHere is critical context and memory you know about the user:\n"
                 f"{memory_rules}\n"
                 "Incorporate these preferences and details naturally into your responses when relevant."
             )
-            formatted_messages.append({"role": "system", "content": system_prompt})
     except Exception as e:
         # If DB fails, log it but proceed without memory context
         print(f"Memory retrieval failed: {e}")
+
+    formatted_messages.append({"role": "system", "content": system_prompt})
 
     # 2. Append the actual conversation messages, injecting retrieval (RAG) context
     rag_context = ""
@@ -81,9 +87,9 @@ def chat(request: ChatRequest):
         if request.messages:
             last_msg = request.messages[-1]
             if last_msg.role == "user":
-                from core.rag import rag_engine
+                from ai.rag_pipeline import query_rag
                 # Query local document index
-                matches = rag_engine.query(last_msg.content, k=3)
+                matches = query_rag(last_msg.content, k=3)
                 if matches:
                     rag_context = (
                         "Relevant excerpts from uploaded user documents:\n\n"
@@ -95,10 +101,14 @@ def chat(request: ChatRequest):
 
     # 3. Compile final message list for LLM engine
     for i, msg in enumerate(request.messages):
-        # Inject RAG system context directly before the last user message
-        if i == len(request.messages) - 1 and msg.role == "user" and rag_context:
-            formatted_messages.append({"role": "system", "content": rag_context})
-        formatted_messages.append({"role": msg.role, "content": msg.content})
+        content = msg.content
+        # Inject constraint suffix to the last user message to enforce strict brevity
+        if i == len(request.messages) - 1 and msg.role == "user":
+            if rag_context:
+                formatted_messages.append({"role": "system", "content": rag_context})
+            content += "\n\n[SYSTEM OVERRIDE: You MUST reply in 1-2 sentences only. No lists. No markdown. Plain text only.]"
+            
+        formatted_messages.append({"role": msg.role, "content": content})
     
     def generate():
         for chunk in llm_client.chat_stream(model, formatted_messages):

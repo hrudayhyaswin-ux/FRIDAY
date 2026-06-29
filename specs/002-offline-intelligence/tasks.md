@@ -45,7 +45,7 @@ can be implemented
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 Create SQLite database schema in backend/database/schema.py
+- [x] T005 Create SQLite database schema in backend/database/schema.py
 - [ ] T037 [P] Configure pre-commit hooks in .pre-commit-config.yaml
 - [ ] T038 [P] Configure formatting checks in pyproject.toml
 - [ ] T039 [P] Configure linting in .ruff.toml
@@ -73,17 +73,17 @@ activity.
 
 ### Implementation for User Story 1
 
-- [ ] T015 [US1] Implement PDF parser using PyMuPDF in backend/documents/parsers/pdf_parser.py
-- [ ] T016 [P] [US1] Implement DOCX parser using python-docx in backend/documents/parsers/docx_parser.py
-- [ ] T017 [P] [US1] Implement TXT and Markdown parser in backend/documents/parsers/text_parser.py
-- [ ] T020 [US1] Implement text chunking pipeline in backend/documents/chunker.py
-- [ ] T021 [P] [US1] Generate embeddings using sentence-transformers MiniLM in backend/documents/embeddings.py
-- [ ] T022 [P] [US1] Store embeddings in FAISS vector index in backend/memory/vector_store.py
-- [ ] T024 [US1] Generate structured JSON output in backend/documents/extraction/json_extractor.py
-- [ ] T025 [P] [US1] Generate summaries in backend/documents/extraction/summarizer.py
-- [ ] T026 [P] [US1] Extract named entities and metadata in backend/documents/extraction/entity_extractor.py
-- [ ] T027 [P] [US1] Generate action items and key insights in backend/documents/extraction/insight_extractor.py
-- [ ] T028 [US1] Build document upload page with progress feedback in frontend/src/pages/upload/
+- [x] T015 [US1] Implement PDF parser using PyMuPDF in backend/documents/parsers/pdf_parser.py
+- [x] T016 [P] [US1] Implement DOCX parser using python-docx in backend/documents/parsers/docx_parser.py
+- [x] T017 [P] [US1] Implement TXT and Markdown parser in backend/documents/parsers/text_parser.py
+- [x] T020 [US1] Implement text chunking pipeline in backend/documents/chunker.py
+- [x] T021 [P] [US1] Generate embeddings using sentence-transformers MiniLM in backend/documents/embeddings.py
+- [x] T022 [P] [US1] Store embeddings in FAISS vector index in backend/memory/vector_store.py
+- [x] T024 [US1] Generate structured JSON output in backend/documents/extraction/json_extractor.py
+- [x] T025 [P] [US1] Generate summaries in backend/documents/extraction/summarizer.py
+- [x] T026 [P] [US1] Extract named entities and metadata in backend/documents/extraction/entity_extractor.py
+- [x] T027 [P] [US1] Generate action items and key insights in backend/documents/extraction/insight_extractor.py
+- [x] T028 [US1] Build document upload page with progress feedback in frontend/src/pages/upload/
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and
 testable independently
@@ -101,13 +101,13 @@ inference only.
 
 ### Implementation for User Story 2
 
-- [ ] T009 [US2] Build chat interface with message bubbles and input in frontend/src/pages/chat/
-- [ ] T010 [US2] Implement FastAPI REST endpoints for chat in backend/api/chat.py
-- [ ] T011 [US2] Implement WebSocket streaming for real-time responses in backend/api/streaming.py
-- [ ] T012 [US2] Integrate Ollama backend with model abstraction layer in backend/ai/ollama_service.py
-- [ ] T013 [P] [US2] Implement local conversation persistence in SQLite in backend/memory/conversation_store.py
-- [ ] T014 [P] [US2] Implement model selection UI in frontend/src/pages/settings/
-- [ ] T023 [US2] Implement Retrieval-Augmented Generation pipeline in backend/ai/rag_pipeline.py
+- [x] T009 [US2] Build chat interface with message bubbles and input in frontend/src/pages/chat/
+- [x] T010 [US2] Implement FastAPI REST endpoints for chat in backend/api/chat.py
+- [x] T011 [US2] Implement WebSocket streaming for real-time responses in backend/api/streaming.py
+- [x] T012 [US2] Integrate Ollama backend with model abstraction layer in backend/ai/ollama_service.py
+- [x] T013 [P] [US2] Implement local conversation persistence in SQLite in backend/memory/conversation_store.py
+- [x] T014 [P] [US2] Implement model selection UI in frontend/src/pages/settings/
+- [x] T023 [US2] Implement Retrieval-Augmented Generation pipeline in backend/ai/rag_pipeline.py
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work
 independently
@@ -125,9 +125,9 @@ activity.
 
 ### Implementation for User Story 3
 
-- [ ] T018 [US3] Implement OCR pipeline using Tesseract in backend/documents/ocr.py
-- [ ] T019 [P] [US3] Implement audio transcription using whisper.cpp in backend/documents/transcriber.py
-- [ ] T029 [US3] Build searchable document library page in frontend/src/pages/documents/
+- [x] T018 [US3] Implement OCR pipeline using Tesseract in backend/documents/ocr.py
+- [x] T019 [P] [US3] Implement audio transcription using whisper.cpp in backend/documents/transcriber.py
+- [x] T029 [US3] Build searchable document library page in frontend/src/pages/documents/
 
 **Checkpoint**: All user stories should now be independently functional
 

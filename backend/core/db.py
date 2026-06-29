@@ -10,28 +10,14 @@ DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "friday_memor
 def init_db():
     try:
         conn = sqlite3.connect(DB_PATH)
+        # Enable foreign keys
+        conn.execute("PRAGMA foreign_keys = ON;")
+        
+        # Import and run schema creation
+        from database.schema import create_tables
+        create_tables(conn)
+        
         cursor = conn.cursor()
-        
-        # Table for storing conversation history
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS chat_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                role TEXT NOT NULL,
-                content TEXT NOT NULL,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Table for storing persistent user facts/preferences
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS user_memory (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                key TEXT UNIQUE NOT NULL,
-                value TEXT NOT NULL,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
         # Seed the database with default memory if it's empty
         cursor.execute('SELECT COUNT(*) FROM user_memory')
         if cursor.fetchone()[0] == 0:

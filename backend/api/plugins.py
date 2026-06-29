@@ -8,7 +8,7 @@ class PluginRunRequest(BaseModel):
     action: str
     params: dict = {}
 
-@router.get("/")
+@router.get("")
 def list_plugins():
     """Returns metadata for all available system control modules."""
     return {

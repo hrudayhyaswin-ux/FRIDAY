@@ -9,7 +9,7 @@ class MemoryItem(BaseModel):
     key: str
     value: str
 
-@router.get("/")
+@router.get("")
 def get_memories():
     """Retrieve all stored user facts/memories."""
     try:
@@ -23,7 +23,7 @@ def get_memories():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/")
+@router.post("")
 def add_memory(item: MemoryItem):
     """Add or update a memory fact."""
     try:
