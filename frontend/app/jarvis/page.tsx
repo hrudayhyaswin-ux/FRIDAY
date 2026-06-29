@@ -61,7 +61,7 @@ interface PluginModule {
   status: string;
 }
 
-export default function JarvisApp() {
+export default function FridayApp() {
   // Navigation / Panel states
   const [activePanel, setActivePanel] = useState<"hud" | "memory" | "plugins" | "docs">("hud");
   
@@ -69,7 +69,7 @@ export default function JarvisApp() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "J.A.R.V.I.S. system activated. Network interface offline. Mainframe linked to local Ollama core. How may I assist you, sir?"
+      content: "F.R.I.D.A.Y. system activated. Network interface offline. Mainframe linked to local Ollama core. How may I assist you, sir?"
     }
   ]);
   const [input, setInput] = useState<string>("");
@@ -628,7 +628,7 @@ export default function JarvisApp() {
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-widest text-cyan-400 flex items-center gap-2">
-              J.A.R.V.I.S. <span className="text-[10px] bg-cyan-950 px-2 py-0.5 border border-cyan-800 text-cyan-300 rounded font-normal">V2.0 PRO</span>
+              F.R.I.D.A.Y. <span className="text-[10px] bg-cyan-950 px-2 py-0.5 border border-cyan-800 text-cyan-300 rounded font-normal">V2.0 PRO</span>
             </h1>
             <p className="text-[10px] text-cyan-600">OFFLINE DECISION INTELLIGENCE CORE</p>
           </div>
@@ -700,7 +700,7 @@ export default function JarvisApp() {
             </h2>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { id: "hud", label: "MAIN HUD", icon: Activity, desc: "Jarvis central core" },
+                { id: "hud", label: "MAIN HUD", icon: Activity, desc: "Friday central core" },
                 { id: "memory", label: "SQL MEMORY", icon: Database, desc: "Knowledge matrix" },
                 { id: "plugins", label: "MAC PLUGINS", icon: Cpu, desc: "OS control unit" },
                 { id: "docs", label: "DOC INTEL", icon: FileText, desc: "RAG engine core" }
@@ -1142,7 +1142,7 @@ export default function JarvisApp() {
             {/* Header info */}
             <div className="flex items-center justify-between border-b border-cyan-950 pb-2 mb-3">
               <span className="text-xs text-cyan-300 font-bold flex items-center gap-1.5">
-                <MessageSquare size={13} className="text-cyan-400 animate-pulse" /> Jarvis chat mainframe
+                <MessageSquare size={13} className="text-cyan-400 animate-pulse" /> Friday chat mainframe
               </span>
               <div className="flex gap-2">
                 <button
@@ -1172,7 +1172,7 @@ export default function JarvisApp() {
                     <div className={`text-[9px] font-bold mb-1 tracking-widest ${
                       isAssistant ? "text-cyan-400" : "text-cyan-600"
                     }`}>
-                      {isAssistant ? "✦ J.A.R.V.I.S." : "✦ USER"}
+                      {isAssistant ? "✦ F.R.I.D.A.Y." : "✦ USER"}
                     </div>
                     
                     {/* Rendered content */}
@@ -1228,7 +1228,7 @@ export default function JarvisApp() {
 
       {/* Global Bottom Status Bar */}
       <footer className="border-t border-cyan-950 bg-black/80 backdrop-blur-md px-6 py-2.5 flex flex-col sm:flex-row items-center justify-between text-[8.5px] text-cyan-600 z-40 relative">
-        <span>© 2026 JARVIS CORE LABS. SYSTEM LICENSED UNDER OFFLINE STANDBY RULES.</span>
+        <span>© 2026 FRIDAY CORE LABS. SYSTEM LICENSED UNDER OFFLINE STANDBY RULES.</span>
         <span className="flex items-center gap-2 mt-1 sm:mt-0">
           <Info size={10} />
           <span>PORT HANDSHAKE: http://localhost:8000/api/v1 (FastAPI)</span>
