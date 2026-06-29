@@ -1,6 +1,0 @@
-#!/bin/bash
-# Find the directory where this script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-# Run jarvis_cli.py using the project's local virtual environment python interpreter
-"$SCRIPT_DIR/backend/venv/bin/python3" "$SCRIPT_DIR/jarvis_cli.py" "$@"
