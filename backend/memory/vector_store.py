@@ -97,7 +97,7 @@ class LocalVectorStore:
                 similarity = np.dot(np_query, vec)
                 similarities.append(similarity)
 
-            top_k_indices = np.argsort(similarities)[::-1][:k]
+            top_k_indices = np.argsort(-np.array(similarities), kind="mergesort")[:k]
             results = []
             for idx in top_k_indices:
                 mapping = self.mappings[idx]
