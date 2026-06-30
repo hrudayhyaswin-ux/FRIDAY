@@ -176,9 +176,13 @@ backend-pytest:
 
 .docker-base: &docker-base
   image: docker:20.10.16
+  services:
+    - docker:dind
   variables:
-    DOCKER_HOST: unix:///var/run/docker.sock
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
   before_script:
+    - docker info > /dev/null 2>&1 || { echo "ERROR: Docker daemon unreachable at tcp://docker:2375"; exit 1; }
     - |
       if [ -z "$CI_REGISTRY_IMAGE" ]; then
         # GitLab Container Registry is not configured for this project.
