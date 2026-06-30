@@ -70,31 +70,27 @@ backend-ruff-format:
 # Stage: lint-frontend
 # ---------------------------------------------------------------------------
 
-frontend-eslint:
-  stage: lint-frontend
+.frontend-base: &frontend-base
   image: node:20-alpine
-  before_script:
-    - cd frontend && npm install --legacy-peer-deps
-  script:
-    - cd frontend && npm run lint
   cache:
     key: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
     paths:
       - frontend/node_modules/
       - .npm-cache/
+  before_script:
+    - cd frontend && npm install --legacy-peer-deps
+
+frontend-eslint:
+  <<: *frontend-base
+  stage: lint-frontend
+  script:
+    - npm run lint
 
 frontend-format-check:
+  <<: *frontend-base
   stage: lint-frontend
-  image: node:20-alpine
-  before_script:
-    - cd frontend && npm install --legacy-peer-deps
   script:
-    - cd frontend && npx prettier --check "app/**/*.{ts,tsx}" "components/**/*.{ts,tsx}"
-  cache:
-    key: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
-    paths:
-      - frontend/node_modules/
-      - .npm-cache/
+    - npx prettier --check "app/**/*.{ts,tsx}" "components/**/*.{ts,tsx}"
 
 # ---------------------------------------------------------------------------
 # Stage: type-check
@@ -114,17 +110,10 @@ backend-mypy:
       - .pip-cache/
 
 frontend-tsc:
+  <<: *frontend-base
   stage: type-check
-  image: node:20-alpine
-  before_script:
-    - cd frontend && npm install --legacy-peer-deps
   script:
-    - cd frontend && npx tsc --noEmit
-  cache:
-    key: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
-    paths:
-      - frontend/node_modules/
-      - .npm-cache/
+    - npx tsc --noEmit
 
 # ---------------------------------------------------------------------------
 # Stage: security
