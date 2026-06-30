@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { Check, Copy } from "lucide-react";
+import React, { useState } from 'react';
+import { Check, Copy } from 'lucide-react';
 
 interface MarkdownRendererProps {
   content: string;
@@ -20,8 +20,8 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
         if (isCodeBlock) {
           // Extract language name if present
-          const firstLineBreak = part.indexOf("\n");
-          let language = "code";
+          const firstLineBreak = part.indexOf('\n');
+          let language = 'code';
           let code = part;
 
           if (firstLineBreak !== -1) {
@@ -50,7 +50,7 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy text: ", err);
+      console.error('Failed to copy text: ', err);
     }
   };
 
@@ -83,30 +83,36 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
 }
 
 function TextBlock({ text }: { text: string }) {
-  const lines = text.split("\n");
+  const lines = text.split('\n');
 
   return (
     <div className="space-y-2">
       {lines.map((line, i) => {
         // Skip empty lines at the very beginning or end
-        if (line.trim() === "" && (i === 0 || i === lines.length - 1)) return null;
+        if (line.trim() === '' && (i === 0 || i === lines.length - 1)) return null;
 
         // Headers
-        if (line.startsWith("# ")) {
+        if (line.startsWith('# ')) {
           return (
-            <h1 key={i} className="text-xl font-bold text-cyan-400 mt-4 mb-2 tracking-wide font-sans">
+            <h1
+              key={i}
+              className="text-xl font-bold text-cyan-400 mt-4 mb-2 tracking-wide font-sans"
+            >
               {parseInlineMarkdown(line.substring(2))}
             </h1>
           );
         }
-        if (line.startsWith("## ")) {
+        if (line.startsWith('## ')) {
           return (
-            <h2 key={i} className="text-lg font-semibold text-purple-400 mt-4 mb-2 tracking-wide font-sans">
+            <h2
+              key={i}
+              className="text-lg font-semibold text-purple-400 mt-4 mb-2 tracking-wide font-sans"
+            >
               {parseInlineMarkdown(line.substring(3))}
             </h2>
           );
         }
-        if (line.startsWith("### ")) {
+        if (line.startsWith('### ')) {
           return (
             <h3 key={i} className="text-base font-semibold text-zinc-200 mt-3 mb-1 font-sans">
               {parseInlineMarkdown(line.substring(4))}
@@ -115,7 +121,7 @@ function TextBlock({ text }: { text: string }) {
         }
 
         // Bullet Lists
-        if (line.trim().startsWith("- ") || line.trim().startsWith("* ")) {
+        if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
           const content = line.trim().substring(2);
           return (
             <ul key={i} className="list-disc pl-5 my-1 text-zinc-300">
@@ -137,7 +143,7 @@ function TextBlock({ text }: { text: string }) {
         }
 
         // Horizontal Line
-        if (line.trim() === "---") {
+        if (line.trim() === '---') {
           return <hr key={i} className="my-4 border-zinc-800" />;
         }
 
@@ -159,25 +165,28 @@ function parseInlineMarkdown(text: string) {
   // Regex to match inline code, bold, etc.
   // We'll split the text and render React elements.
   const parts = text.split(/(\*\*.*?\*\*|`.*?`|\*.*?\*)/g);
-  
+
   return parts.map((part, index) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
+    if (part.startsWith('**') && part.endsWith('**')) {
       return (
         <strong key={index} className="font-semibold text-white">
           {part.slice(2, -2)}
         </strong>
       );
     }
-    if (part.startsWith("*") && part.endsWith("*")) {
+    if (part.startsWith('*') && part.endsWith('*')) {
       return (
         <em key={index} className="italic text-zinc-200">
           {part.slice(1, -1)}
         </em>
       );
     }
-    if (part.startsWith("`") && part.endsWith("`")) {
+    if (part.startsWith('`') && part.endsWith('`')) {
       return (
-        <code key={index} className="rounded bg-zinc-900 border border-zinc-800 px-1 py-0.5 font-mono text-xs text-pink-400">
+        <code
+          key={index}
+          className="rounded bg-zinc-900 border border-zinc-800 px-1 py-0.5 font-mono text-xs text-pink-400"
+        >
           {part.slice(1, -1)}
         </code>
       );

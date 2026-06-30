@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+
 from ai.ollama_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -7,12 +7,14 @@ logger = logging.getLogger(__name__)
 # Lazy load sentence_transformers
 _model = None
 
+
 def _get_sentence_transformer_model():
     global _model
     if _model is not None:
         return _model
     try:
         from sentence_transformers import SentenceTransformer
+
         logger.info("Loading sentence-transformers model 'all-MiniLM-L6-v2'...")
         _model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
         logger.info("SentenceTransformer loaded successfully.")
@@ -24,7 +26,8 @@ def _get_sentence_transformer_model():
         logger.error(f"Error loading sentence-transformers: {e}")
         return None
 
-def get_embedding(text: str, embed_model: str = "nomic-embed-text") -> List[float]:
+
+def get_embedding(text: str, embed_model: str = "nomic-embed-text") -> list[float]:
     """Generates an embedding vector for the text using local SentenceTransformer or local Ollama."""
     # Try sentence-transformers first
     model = _get_sentence_transformer_model()

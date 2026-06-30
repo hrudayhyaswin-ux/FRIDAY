@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useRef } from "react";
-import { 
-  MessageSquare, 
-  FileText, 
-  Cpu, 
-  Play, 
-  Settings as SettingsIcon, 
-  Activity, 
-  Send, 
-  Trash2, 
-  RefreshCw, 
-  ChevronRight, 
-  Sparkles, 
-  HardDrive, 
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  MessageSquare,
+  FileText,
+  Cpu,
+  Play,
+  Settings as SettingsIcon,
+  Activity,
+  Send,
+  Trash2,
+  RefreshCw,
+  ChevronRight,
+  Sparkles,
+  HardDrive,
   Database,
   Terminal,
   Paperclip,
@@ -22,14 +22,14 @@ import {
   HelpCircle,
   Square,
   Volume2,
-  VolumeX
-} from "lucide-react";
-import MarkdownRenderer from "@/components/MarkdownRenderer";
+  VolumeX,
+} from 'lucide-react';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 
-const API_BASE = "http://localhost:8000/api/v1";
+const API_BASE = 'http://localhost:8000/api/v1';
 
 interface Message {
-  role: "system" | "user" | "assistant";
+  role: 'system' | 'user' | 'assistant';
   content: string;
 }
 
@@ -65,25 +65,26 @@ interface PluginModule {
 
 export default function Home() {
   // Tabs: 'chat' | 'docs' | 'memory' | 'plugins' | 'system'
-  const [activeTab, setActiveTab] = useState<string>("chat");
+  const [activeTab, setActiveTab] = useState<string>('chat');
   const [messages, setMessages] = useState<Message[]>([
     {
-      role: "assistant",
-      content: "Hello. I am FRIDAY. Systems are fully loaded and running offline. How can I assist you today?"
-    }
+      role: 'assistant',
+      content:
+        'Hello. I am FRIDAY. Systems are fully loaded and running offline. How can I assist you today?',
+    },
   ]);
-  const [input, setInput] = useState<string>("");
+  const [input, setInput] = useState<string>('');
   const [models, setModels] = useState<Model[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>("");
+  const [selectedModel, setSelectedModel] = useState<string>('');
   const [status, setStatus] = useState<SystemStatus>({
-    status: "connecting",
+    status: 'connecting',
     ollama_connected: false,
-    ollama_host: ""
+    ollama_host: '',
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [consoleLogs, setConsoleLogs] = useState<string[]>([
-    "Initializing FRIDAY AI Core...",
-    "Loading offline system variables...",
+    'Initializing FRIDAY AI Core...',
+    'Loading offline system variables...',
   ]);
 
   // Voice Interaction State (Phase 2)
@@ -94,8 +95,8 @@ export default function Home() {
 
   // SQLite Memory State (Phase 3)
   const [memories, setMemories] = useState<MemoryFact[]>([]);
-  const [newMemKey, setNewMemKey] = useState<string>("");
-  const [newMemVal, setNewMemVal] = useState<string>("");
+  const [newMemKey, setNewMemKey] = useState<string>('');
+  const [newMemVal, setNewMemVal] = useState<string>('');
 
   // Document Intel RAG State (Phase 4)
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
@@ -107,14 +108,14 @@ export default function Home() {
   // Modular Plugins State (Phase 5)
   const [plugins, setPlugins] = useState<PluginModule[]>([]);
   const [volumeValue, setVolumeValue] = useState<number>(50);
-  const [openAppName, setOpenAppName] = useState<string>("");
-  const [systemStatsText, setSystemStatsText] = useState<string>("");
+  const [openAppName, setOpenAppName] = useState<string>('');
+  const [systemStatsText, setSystemStatsText] = useState<string>('');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom of chat
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -131,54 +132,54 @@ export default function Home() {
 
   // Sync memory when activeTab switches to memory
   useEffect(() => {
-    if (activeTab === "memory") {
+    if (activeTab === 'memory') {
       fetchMemories();
     }
-    if (activeTab === "docs") {
+    if (activeTab === 'docs') {
       fetchUploadedFiles();
     }
-    if (activeTab === "plugins") {
+    if (activeTab === 'plugins') {
       fetchPlugins();
     }
   }, [activeTab]);
 
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
-    setConsoleLogs(prev => [`[${timestamp}] ${message}`, ...prev.slice(0, 49)]);
+    setConsoleLogs((prev) => [`[${timestamp}] ${message}`, ...prev.slice(0, 49)]);
   };
 
   const fetchSystemStatus = async () => {
     try {
-      addLog("Checking Ollama local connection status...");
+      addLog('Checking Ollama local connection status...');
       const res = await fetch(`${API_BASE}/status`);
-      if (!res.ok) throw new Error("Status API returned error");
+      if (!res.ok) throw new Error('Status API returned error');
       const data = await res.json();
       setStatus(data);
       if (data.ollama_connected) {
         addLog(`Connected to Ollama host at ${data.ollama_host}`);
       } else {
-        addLog("Ollama service not detected. Make sure Ollama app is running.");
+        addLog('Ollama service not detected. Make sure Ollama app is running.');
       }
     } catch (err: any) {
       addLog(`Status Check Failed: ${err.message}`);
       setStatus({
-        status: "offline",
+        status: 'offline',
         ollama_connected: false,
-        ollama_host: "http://localhost:11434"
+        ollama_host: 'http://localhost:11434',
       });
     }
   };
 
   const fetchModels = async () => {
     try {
-      addLog("Fetching locally available GGUF/Ollama models...");
+      addLog('Fetching locally available GGUF/Ollama models...');
       const res = await fetch(`${API_BASE}/models`);
-      if (!res.ok) throw new Error("Models API returned error");
+      if (!res.ok) throw new Error('Models API returned error');
       const data = await res.json();
       setModels(data);
       if (data.length > 0) {
         setSelectedModel(data[0].name);
-        addLog(`Found ${data.length} local model(s): ${data.map((m: any) => m.name).join(", ")}`);
+        addLog(`Found ${data.length} local model(s): ${data.map((m: any) => m.name).join(', ')}`);
       } else {
         addLog("No local models found. Pull a model using 'ollama pull phi3'.");
       }
@@ -189,9 +190,9 @@ export default function Home() {
 
   const fetchMemories = async () => {
     try {
-      addLog("Syncing offline SQLite memory core...");
+      addLog('Syncing offline SQLite memory core...');
       const res = await fetch(`${API_BASE}/memory`);
-      if (!res.ok) throw new Error("Memory API error");
+      if (!res.ok) throw new Error('Memory API error');
       const data = await res.json();
       setMemories(data);
       addLog(`Loaded ${data.length} keys from SQLite.`);
@@ -205,14 +206,14 @@ export default function Home() {
     if (!newMemKey.trim() || !newMemVal.trim()) return;
     try {
       const res = await fetch(`${API_BASE}/memory`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: newMemKey, value: newMemVal })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: newMemKey, value: newMemVal }),
       });
-      if (!res.ok) throw new Error("Failed to add memory");
+      if (!res.ok) throw new Error('Failed to add memory');
       addLog(`Saved memory fact: ${newMemKey} -> ${newMemVal}`);
-      setNewMemKey("");
-      setNewMemVal("");
+      setNewMemKey('');
+      setNewMemVal('');
       fetchMemories();
     } catch (err: any) {
       addLog(`Memory Save Error: ${err.message}`);
@@ -222,9 +223,9 @@ export default function Home() {
   const handleDeleteMemory = async (key: string) => {
     try {
       const res = await fetch(`${API_BASE}/memory/${key}`, {
-        method: "DELETE"
+        method: 'DELETE',
       });
-      if (!res.ok) throw new Error("Failed to delete memory");
+      if (!res.ok) throw new Error('Failed to delete memory');
       addLog(`Deleted memory fact: ${key}`);
       fetchMemories();
     } catch (err: any) {
@@ -240,7 +241,7 @@ export default function Home() {
         setUploadedFiles(data.documents || []);
       }
     } catch (err) {
-      console.error("Error fetching uploaded files:", err);
+      console.error('Error fetching uploaded files:', err);
     }
   };
 
@@ -254,7 +255,7 @@ export default function Home() {
         setSelectedDoc(data);
         addLog(`Loaded intelligence for: ${data.filename}`);
       } else {
-        throw new Error("Failed to fetch document details");
+        throw new Error('Failed to fetch document details');
       }
     } catch (err: any) {
       addLog(`Failed loading document details: ${err.message}`);
@@ -266,19 +267,19 @@ export default function Home() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     setIsUploading(true);
     addLog(`Uploading & analyzing document: ${file.name}...`);
-    
+
     const formData = new FormData();
-    formData.append("file", file);
-    
+    formData.append('file', file);
+
     try {
       const res = await fetch(`${API_BASE}/docs/upload`, {
-        method: "POST",
-        body: formData
+        method: 'POST',
+        body: formData,
       });
-      if (!res.ok) throw new Error("Upload failed");
+      if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
       addLog(`Indexed '${file.name}' (${data.chunks_count || 0} fragments stored locally)`);
       fetchUploadedFiles();
@@ -286,7 +287,7 @@ export default function Home() {
       addLog(`RAG Upload Failed: ${err.message}`);
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -294,16 +295,16 @@ export default function Home() {
     addLog(`Deleting document ID: ${id}...`);
     try {
       const res = await fetch(`${API_BASE}/docs/${id}`, {
-        method: "DELETE"
+        method: 'DELETE',
       });
       if (res.ok) {
-        addLog("Document deleted successfully.");
+        addLog('Document deleted successfully.');
         if (selectedDoc && selectedDoc.id === id) {
           setSelectedDoc(null);
         }
         fetchUploadedFiles();
       } else {
-        throw new Error("Delete request failed");
+        throw new Error('Delete request failed');
       }
     } catch (err: any) {
       addLog(`Delete Error: ${err.message}`);
@@ -313,10 +314,10 @@ export default function Home() {
   const handleClearDocs = async () => {
     try {
       const res = await fetch(`${API_BASE}/docs/clear`, {
-        method: "DELETE"
+        method: 'DELETE',
       });
       if (res.ok) {
-        addLog("All database documents and vector indices wiped.");
+        addLog('All database documents and vector indices wiped.');
         setSelectedDoc(null);
         fetchUploadedFiles();
       }
@@ -333,7 +334,7 @@ export default function Home() {
         setPlugins(data.plugins || []);
       }
     } catch (err) {
-      console.error("Error fetching plugins:", err);
+      console.error('Error fetching plugins:', err);
     }
   };
 
@@ -341,14 +342,14 @@ export default function Home() {
     addLog(`Invoking plugin action: ${action}...`);
     try {
       const res = await fetch(`${API_BASE}/plugins/run`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, params })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, params }),
       });
-      if (!res.ok) throw new Error("Plugin execution failed");
+      if (!res.ok) throw new Error('Plugin execution failed');
       const data = await res.json();
       addLog(`Plugin Response: ${data.message}`);
-      if (action === "system_stats") {
+      if (action === 'system_stats') {
         setSystemStatsText(data.message);
       }
     } catch (err: any) {
@@ -361,42 +362,44 @@ export default function Home() {
     const userMessageText = overrideText || input;
     if (!userMessageText.trim() || isLoading) return;
 
-    setInput("");
-    
-    const userMsg: Message = { role: "user", content: userMessageText };
+    setInput('');
+
+    const userMsg: Message = { role: 'user', content: userMessageText };
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     setIsLoading(true);
-    addLog(`User command: "${userMessageText.substring(0, 30)}${userMessageText.length > 30 ? '...' : ''}"`);
+    addLog(
+      `User command: "${userMessageText.substring(0, 30)}${userMessageText.length > 30 ? '...' : ''}"`,
+    );
 
     // Prepare assistant placeholder
     const assistantMsgIndex = updatedMessages.length;
-    setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+    setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
 
     try {
-      addLog(`Streaming using model: ${selectedModel || "default"}`);
+      addLog(`Streaming using model: ${selectedModel || 'default'}`);
       const response = await fetch(`${API_BASE}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: selectedModel || undefined,
-          messages: updatedMessages
-        })
+          messages: updatedMessages,
+        }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || "Failed to connect to model server");
+        throw new Error(errorText || 'Failed to connect to model server');
       }
 
       if (!response.body) {
-        throw new Error("Response body is empty");
+        throw new Error('Response body is empty');
       }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
-      let streamedResponse = "";
+      let streamedResponse = '';
 
       while (!done) {
         const { value, done: doneReading } = await reader.read();
@@ -404,8 +407,8 @@ export default function Home() {
         if (value) {
           const chunk = decoder.decode(value);
           streamedResponse += chunk;
-          
-          setMessages(prev => {
+
+          setMessages((prev) => {
             const next = [...prev];
             if (next[assistantMsgIndex]) {
               next[assistantMsgIndex].content = streamedResponse;
@@ -414,8 +417,8 @@ export default function Home() {
           });
         }
       }
-      addLog("Stream finished successfully.");
-      
+      addLog('Stream finished successfully.');
+
       // Play TTS if voice mode is enabled
       if (voiceMode && streamedResponse.trim()) {
         playTTS(streamedResponse);
@@ -423,10 +426,11 @@ export default function Home() {
     } catch (error: any) {
       console.error(error);
       addLog(`LLM Query Error: ${error.message}`);
-      setMessages(prev => {
+      setMessages((prev) => {
         const next = [...prev];
         if (next[assistantMsgIndex]) {
-          next[assistantMsgIndex].content = `Error generating response: ${error.message}. Please verify the backend and Ollama server are active.`;
+          next[assistantMsgIndex].content =
+            `Error generating response: ${error.message}. Please verify the backend and Ollama server are active.`;
         }
         return next;
       });
@@ -438,18 +442,18 @@ export default function Home() {
   const playTTS = async (text: string) => {
     try {
       const res = await fetch(`${API_BASE}/speech/synthesize`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
       });
-      if (!res.ok) throw new Error("TTS failed");
-      
+      if (!res.ok) throw new Error('TTS failed');
+
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       audio.play().catch((e) => {
-        console.warn("Browser blocked audio playback:", e);
-        addLog("Audio playback blocked by browser. Please interact with the page first.");
+        console.warn('Browser blocked audio playback:', e);
+        addLog('Audio playback blocked by browser. Please interact with the page first.');
       });
     } catch (err: any) {
       addLog(`TTS Error: ${err.message}`);
@@ -459,21 +463,21 @@ export default function Home() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
+
       // Attempt to negotiate browser-preferred codecs
       let options = {};
-      let mimeType = "audio/webm";
-      
-      if (typeof MediaRecorder !== "undefined") {
-        if (MediaRecorder.isTypeSupported("audio/webm")) {
-          options = { mimeType: "audio/webm" };
-          mimeType = "audio/webm";
-        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
-          options = { mimeType: "audio/mp4" };
-          mimeType = "audio/mp4";
-        } else if (MediaRecorder.isTypeSupported("audio/wav")) {
-          options = { mimeType: "audio/wav" };
-          mimeType = "audio/wav";
+      let mimeType = 'audio/webm';
+
+      if (typeof MediaRecorder !== 'undefined') {
+        if (MediaRecorder.isTypeSupported('audio/webm')) {
+          options = { mimeType: 'audio/webm' };
+          mimeType = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          options = { mimeType: 'audio/mp4' };
+          mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/wav')) {
+          options = { mimeType: 'audio/wav' };
+          mimeType = 'audio/wav';
         }
       }
 
@@ -481,9 +485,9 @@ export default function Home() {
       try {
         mediaRecorder = new MediaRecorder(stream, options);
       } catch (e) {
-        console.warn("MediaRecorder with options failed, falling back to default constructor:", e);
+        console.warn('MediaRecorder with options failed, falling back to default constructor:', e);
         mediaRecorder = new MediaRecorder(stream);
-        mimeType = mediaRecorder.mimeType || "audio/webm";
+        mimeType = mediaRecorder.mimeType || 'audio/webm';
       }
 
       mediaRecorderRef.current = mediaRecorder;
@@ -499,22 +503,22 @@ export default function Home() {
         const finalMimeType = mediaRecorder.mimeType || mimeType;
         const audioBlob = new Blob(audioChunksRef.current, { type: finalMimeType });
         await processAudioInput(audioBlob, finalMimeType);
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorder.start();
       setIsRecording(true);
-      addLog("Microphone activated. Listening...");
+      addLog('Microphone activated. Listening...');
     } catch (err: any) {
       addLog(`Microphone Error: ${err.message}`);
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      addLog("Processing voice input...");
+      addLog('Processing voice input...');
     }
   };
 
@@ -522,24 +526,24 @@ export default function Home() {
     setIsLoading(true);
     try {
       // Pick matching extension for backend parser
-      const ext = mimeType.includes("mp4") ? "mp4" : mimeType.includes("wav") ? "wav" : "webm";
+      const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('wav') ? 'wav' : 'webm';
       const formData = new FormData();
-      formData.append("file", audioBlob, `voice.${ext}`);
-      
+      formData.append('file', audioBlob, `voice.${ext}`);
+
       const res = await fetch(`${API_BASE}/speech/transcribe`, {
-        method: "POST",
-        body: formData
+        method: 'POST',
+        body: formData,
       });
-      
-      if (!res.ok) throw new Error("Transcription failed");
+
+      if (!res.ok) throw new Error('Transcription failed');
       const data = await res.json();
       const transcribedText = data.text;
-      
+
       if (transcribedText) {
         addLog(`Transcribed: "${transcribedText}"`);
         handleSend(undefined, transcribedText);
       } else {
-        addLog("No speech detected.");
+        addLog('No speech detected.');
         setIsLoading(false);
       }
     } catch (err: any) {
@@ -551,41 +555,43 @@ export default function Home() {
   const handleClearHistory = () => {
     setMessages([
       {
-        role: "assistant",
-        content: "FRIDAY systems refreshed. Command history cleared. How can I help you?"
-      }
+        role: 'assistant',
+        content: 'FRIDAY systems refreshed. Command history cleared. How can I help you?',
+      },
     ]);
-    addLog("Chat history cleared.");
+    addLog('Chat history cleared.');
   };
 
   const formatBytes = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
+    if (bytes === 0) return '0 Bytes';
     const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const suggestions = [
-    "Write a Python script to scan files",
-    "Explain what neural networks are in simple terms",
-    "Generate a bash script to back up folders",
-    "Help me organize my personal project roadmap"
+    'Write a Python script to scan files',
+    'Explain what neural networks are in simple terms',
+    'Generate a bash script to back up folders',
+    'Help me organize my personal project roadmap',
   ];
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-[#030712] text-zinc-100 font-sans overflow-hidden">
-      
       {/* SIDEBAR */}
       <aside className="w-full lg:w-80 flex flex-col border-r border-zinc-800/80 bg-zinc-950/60 backdrop-blur-md">
-        
         {/* Core Header */}
         <div className="p-6 border-b border-zinc-800/80 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Pulsing Core Orb */}
             <div className="relative flex items-center justify-center">
-              <div className={`absolute w-8 h-8 rounded-full bg-cyan-500/20 blur-md ${isLoading ? 'animate-pulse' : ''}`} />
-              <div className={`w-5 h-5 rounded-full bg-gradient-to-tr from-cyan-400 to-indigo-500 shadow-[0_0_10px_rgba(6,182,212,0.8)] flex items-center justify-center ${isLoading ? 'animate-spin' : ''}`}>
+              <div
+                className={`absolute w-8 h-8 rounded-full bg-cyan-500/20 blur-md ${isLoading ? 'animate-pulse' : ''}`}
+              />
+              <div
+                className={`w-5 h-5 rounded-full bg-gradient-to-tr from-cyan-400 to-indigo-500 shadow-[0_0_10px_rgba(6,182,212,0.8)] flex items-center justify-center ${isLoading ? 'animate-spin' : ''}`}
+              >
                 <div className="w-1.5 h-1.5 rounded-full bg-white" />
               </div>
             </div>
@@ -593,11 +599,13 @@ export default function Home() {
               <h1 className="text-lg font-bold tracking-widest bg-gradient-to-r from-cyan-400 via-cyan-200 to-white bg-clip-text text-transparent">
                 FRIDAY AI
               </h1>
-              <p className="text-[10px] text-zinc-500 font-mono tracking-wider">OFFLINE PERSONAL CORE</p>
+              <p className="text-[10px] text-zinc-500 font-mono tracking-wider">
+                OFFLINE PERSONAL CORE
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={() => {
                 setVoiceMode(!voiceMode);
                 addLog(`Voice synthesis ${!voiceMode ? 'enabled' : 'disabled'}`);
@@ -607,9 +615,11 @@ export default function Home() {
             >
               {voiceMode ? <Volume2 size={14} /> : <VolumeX size={14} />}
             </button>
-            <span className={`h-2 w-2 rounded-full ${status.ollama_connected ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]'}`} />
+            <span
+              className={`h-2 w-2 rounded-full ${status.ollama_connected ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]'}`}
+            />
             <span className="text-[10px] font-mono text-zinc-400 uppercase">
-              {status.ollama_connected ? "Local" : "Offline"}
+              {status.ollama_connected ? 'Local' : 'Offline'}
             </span>
           </div>
         </div>
@@ -632,7 +642,7 @@ export default function Home() {
               {models.length > 0 ? (
                 models.map((m) => (
                   <option key={m.name} value={m.name}>
-                    {m.name} ({m.details.parameter_size || "Local"})
+                    {m.name} ({m.details.parameter_size || 'Local'})
                   </option>
                 ))
               ) : (
@@ -653,11 +663,11 @@ export default function Home() {
         {/* Tabs Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {[
-            { id: "chat", label: "Neural Chat", icon: MessageSquare, badge: null },
-            { id: "docs", label: "Document Intel", icon: FileText, badge: null },
-            { id: "memory", label: "SQLite Memory", icon: Database, badge: null },
-            { id: "plugins", label: "Modular Plugins", icon: Cpu, badge: null },
-            { id: "system", label: "System Status", icon: Activity, badge: null },
+            { id: 'chat', label: 'Neural Chat', icon: MessageSquare, badge: null },
+            { id: 'docs', label: 'Document Intel', icon: FileText, badge: null },
+            { id: 'memory', label: 'SQLite Memory', icon: Database, badge: null },
+            { id: 'plugins', label: 'Modular Plugins', icon: Cpu, badge: null },
+            { id: 'system', label: 'System Status', icon: Activity, badge: null },
           ].map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -666,13 +676,13 @@ export default function Home() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                  active 
-                    ? "bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 shadow-md shadow-cyan-950/20" 
-                    : "text-zinc-400 border border-transparent hover:bg-zinc-900/60 hover:text-zinc-200"
+                  active
+                    ? 'bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 shadow-md shadow-cyan-950/20'
+                    : 'text-zinc-400 border border-transparent hover:bg-zinc-900/60 hover:text-zinc-200'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon size={16} className={active ? "text-cyan-400" : "text-zinc-500"} />
+                  <Icon size={16} className={active ? 'text-cyan-400' : 'text-zinc-500'} />
                   <span>{tab.label}</span>
                 </div>
                 {tab.badge && (
@@ -691,7 +701,7 @@ export default function Home() {
             <span className="text-[10px] font-bold text-zinc-400 tracking-wider flex items-center gap-1">
               <Terminal size={10} /> SYSTEM_MONITOR
             </span>
-            <button 
+            <button
               onClick={() => {
                 fetchSystemStatus();
                 fetchModels();
@@ -704,7 +714,9 @@ export default function Home() {
           </div>
           <div className="flex-1 overflow-y-auto space-y-1 scrollbar-none select-none">
             {consoleLogs.map((log, index) => (
-              <div key={index} className="truncate">{log}</div>
+              <div key={index} className="truncate">
+                {log}
+              </div>
             ))}
           </div>
         </div>
@@ -714,7 +726,7 @@ export default function Home() {
       <main className="flex-1 flex flex-col h-full bg-[#030712] relative">
         {/* Holographic grid background */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/15 via-zinc-950/5 to-zinc-950 pointer-events-none z-0" />
-        
+
         {/* TOP STATUS BAR */}
         <header className="h-16 border-b border-zinc-800/80 flex items-center justify-between px-6 bg-zinc-950/20 backdrop-blur-sm z-10">
           <div className="flex items-center gap-2">
@@ -735,8 +747,8 @@ export default function Home() {
                 <span>RAM: ~4-8GB REQ.</span>
               </div>
             </div>
-            
-            {activeTab === "chat" && (
+
+            {activeTab === 'chat' && (
               <button
                 onClick={handleClearHistory}
                 className="flex items-center gap-1.5 text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg hover:bg-zinc-800 hover:text-white transition"
@@ -750,9 +762,8 @@ export default function Home() {
 
         {/* TAB CONTENTS */}
         <div className="flex-1 overflow-hidden flex flex-col z-10">
-          
           {/* TAB 1: NEURAL CHAT */}
-          {activeTab === "chat" && (
+          {activeTab === 'chat' && (
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Messages viewport */}
               <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-zinc-800/80">
@@ -761,11 +772,14 @@ export default function Home() {
                     <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center mx-auto border border-cyan-500/20">
                       <Sparkles className="text-cyan-400 animate-pulse" size={24} />
                     </div>
-                    <h3 className="text-base font-bold text-zinc-100">Welcome to FRIDAY Offline Chat</h3>
+                    <h3 className="text-base font-bold text-zinc-100">
+                      Welcome to FRIDAY Offline Chat
+                    </h3>
                     <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
-                      All computations and reasoning happen strictly locally on your Mac's CPU. No data ever leaves this machine. Choose prompts below or type your inquiry.
+                      All computations and reasoning happen strictly locally on your Mac&apos;s CPU.
+                      No data ever leaves this machine. Choose prompts below or type your inquiry.
                     </p>
-                    
+
                     {/* Prompt suggestions grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 text-left">
                       {suggestions.map((sug, i) => (
@@ -775,7 +789,10 @@ export default function Home() {
                           className="p-3 text-xs bg-zinc-950/40 border border-zinc-800 hover:border-cyan-500/40 hover:bg-cyan-950/10 text-zinc-300 rounded-lg transition text-left flex items-start justify-between group"
                         >
                           <span className="group-hover:text-zinc-200">{sug}</span>
-                          <ChevronRight size={14} className="text-zinc-600 group-hover:text-cyan-400 transition shrink-0 ml-1" />
+                          <ChevronRight
+                            size={14}
+                            className="text-zinc-600 group-hover:text-cyan-400 transition shrink-0 ml-1"
+                          />
                         </button>
                       ))}
                     </div>
@@ -783,10 +800,10 @@ export default function Home() {
                 )}
 
                 {messages.map((msg, i) => {
-                  const isUser = msg.role === "user";
+                  const isUser = msg.role === 'user';
                   return (
-                    <div 
-                      key={i} 
+                    <div
+                      key={i}
                       className={`flex gap-4 max-w-3xl mx-auto ${isUser ? 'justify-end' : 'justify-start'}`}
                     >
                       {/* Avatar for Assistant */}
@@ -796,11 +813,13 @@ export default function Home() {
                         </div>
                       )}
 
-                      <div className={`p-4 rounded-xl border max-w-[85%] leading-relaxed ${
-                        isUser 
-                          ? 'bg-gradient-to-r from-cyan-950/60 to-indigo-950/60 border-cyan-500/20 text-zinc-100 shadow-md shadow-cyan-950/10' 
-                          : 'bg-zinc-900/40 border-zinc-800/80 text-zinc-200'
-                      }`}>
+                      <div
+                        className={`p-4 rounded-xl border max-w-[85%] leading-relaxed ${
+                          isUser
+                            ? 'bg-gradient-to-r from-cyan-950/60 to-indigo-950/60 border-cyan-500/20 text-zinc-100 shadow-md shadow-cyan-950/10'
+                            : 'bg-zinc-900/40 border-zinc-800/80 text-zinc-200'
+                        }`}
+                      >
                         <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-1.5">
                           {isUser ? 'User Authorization' : 'FRIDAY Core Intelligence'}
                         </div>
@@ -808,9 +827,18 @@ export default function Home() {
                           <MarkdownRenderer content={msg.content} />
                         ) : (
                           <div className="flex items-center gap-2 py-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                            <span
+                              className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce"
+                              style={{ animationDelay: '0ms' }}
+                            />
+                            <span
+                              className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce"
+                              style={{ animationDelay: '150ms' }}
+                            />
+                            <span
+                              className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce"
+                              style={{ animationDelay: '300ms' }}
+                            />
                           </div>
                         )}
                       </div>
@@ -831,10 +859,10 @@ export default function Home() {
               <div className="p-4 border-t border-zinc-800/80 bg-zinc-950/40 backdrop-blur-md">
                 <form onSubmit={handleSend} className="max-w-3xl mx-auto flex items-center gap-2">
                   <div className="flex-1 flex items-center gap-2 bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 focus-within:border-cyan-500/50 rounded-xl px-4 py-2.5 transition">
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="text-zinc-500 hover:text-cyan-400 transition" 
+                      className="text-zinc-500 hover:text-cyan-400 transition"
                       title="Attach document to index"
                     >
                       <Paperclip size={18} />
@@ -843,20 +871,22 @@ export default function Home() {
                       type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      placeholder={isLoading ? "Generating response..." : "Instruct FRIDAY assistant..."}
+                      placeholder={
+                        isLoading ? 'Generating response...' : 'Instruct FRIDAY assistant...'
+                      }
                       disabled={isLoading}
                       className="flex-1 bg-transparent border-none outline-none text-sm text-zinc-200 placeholder-zinc-500 focus:ring-0"
                     />
                     <div className="flex items-center px-2">
-                    <button 
-                      type="button"
-                      onClick={isRecording ? stopRecording : startRecording}
-                      className={`${isRecording ? 'text-rose-500 animate-pulse' : 'text-zinc-500 hover:text-cyan-400'} transition`} 
-                      title={isRecording ? "Stop Recording" : "Voice Command"}
-                    >
-                      {isRecording ? <Square size={18} /> : <Mic size={18} />}
-                    </button>
-                  </div>
+                      <button
+                        type="button"
+                        onClick={isRecording ? stopRecording : startRecording}
+                        className={`${isRecording ? 'text-rose-500 animate-pulse' : 'text-zinc-500 hover:text-cyan-400'} transition`}
+                        title={isRecording ? 'Stop Recording' : 'Voice Command'}
+                      >
+                        {isRecording ? <Square size={18} /> : <Mic size={18} />}
+                      </button>
+                    </div>
                   </div>
                   <button
                     type="submit"
@@ -868,16 +898,17 @@ export default function Home() {
                 </form>
                 <div className="max-w-3xl mx-auto mt-2 text-[10px] text-zinc-500 flex justify-between font-mono px-1">
                   <span>Press ENTER to issue query</span>
-                  <span className="flex items-center gap-1"><HardDrive size={8} /> Local CPU Execution</span>
+                  <span className="flex items-center gap-1">
+                    <HardDrive size={8} /> Local CPU Execution
+                  </span>
                 </div>
               </div>
             </div>
           )}
 
           {/* TAB 2: DOCUMENT INTEL */}
-          {activeTab === "docs" && (
+          {activeTab === 'docs' && (
             <div className="flex-1 overflow-hidden p-6 flex flex-col md:flex-row gap-6">
-              
               {/* LEFT SIDEBAR: Document List & Upload */}
               <div className="w-full md:w-5/12 flex flex-col gap-4 overflow-y-auto pr-2">
                 <div className="p-5 rounded-xl border border-zinc-800 bg-zinc-900/20 space-y-4">
@@ -891,33 +922,40 @@ export default function Home() {
                     </div>
                   </div>
                   <p className="text-xs text-zinc-400 leading-relaxed">
-                    Upload documents (PDF, DOCX, TXT, MD), images for OCR, or audio for transcription. The offline pipeline chunks, embeds, indexes, and extracts structured insights locally on CPU.
+                    Upload documents (PDF, DOCX, TXT, MD), images for OCR, or audio for
+                    transcription. The offline pipeline chunks, embeds, indexes, and extracts
+                    structured insights locally on CPU.
                   </p>
 
                   {/* Hidden File Input */}
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handleFileUpload} 
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
                     accept=".pdf,.docx,.doc,.txt,.csv,.md,.png,.jpg,.jpeg,.tiff,.wav,.mp3,.ogg,.flac,.m4a,.webm"
-                    className="hidden" 
+                    className="hidden"
                   />
 
                   <div className="p-6 border border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-center space-y-3 bg-zinc-950/40 hover:border-purple-500/40 transition">
-                    <FileText size={28} className={`text-zinc-600 ${isUploading ? 'animate-bounce text-purple-400' : ''}`} />
+                    <FileText
+                      size={28}
+                      className={`text-zinc-600 ${isUploading ? 'animate-bounce text-purple-400' : ''}`}
+                    />
                     <div>
                       <p className="text-xs font-bold text-zinc-300">
-                        {isUploading ? "Processing document..." : "Drag or select local files"}
+                        {isUploading ? 'Processing document...' : 'Drag or select local files'}
                       </p>
-                      <p className="text-[9px] text-zinc-500 mt-1">PDF, DOCX, TXT, MD, Images, Audio up to 50MB</p>
+                      <p className="text-[9px] text-zinc-500 mt-1">
+                        PDF, DOCX, TXT, MD, Images, Audio up to 50MB
+                      </p>
                     </div>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploading}
                       className="px-4 py-1.5 rounded bg-purple-500/20 border border-purple-500/40 text-xs text-purple-300 hover:bg-purple-500/30 transition disabled:opacity-50"
                     >
-                      {isUploading ? "Uploading..." : "Select File"}
+                      {isUploading ? 'Uploading...' : 'Select File'}
                     </button>
                   </div>
                 </div>
@@ -929,7 +967,7 @@ export default function Home() {
                       Indexed Documents ({uploadedFiles.length})
                     </span>
                     {uploadedFiles.length > 0 && (
-                      <button 
+                      <button
                         onClick={handleClearDocs}
                         className="text-[9px] text-rose-400 hover:text-rose-300 font-mono border border-rose-500/30 rounded px-2 py-0.5 bg-rose-500/10 hover:bg-rose-500/20 transition"
                       >
@@ -937,28 +975,34 @@ export default function Home() {
                       </button>
                     )}
                   </div>
-                  
+
                   <div className="flex-1 overflow-y-auto divide-y divide-zinc-900">
                     {uploadedFiles.length > 0 ? (
                       uploadedFiles.map((doc) => {
                         const isSelected = selectedDoc && selectedDoc.id === doc.id;
                         return (
-                          <div 
+                          <div
                             key={doc.id}
                             onClick={() => fetchDocumentDetails(doc.id)}
                             className={`p-3.5 flex flex-col gap-1.5 cursor-pointer transition ${
-                              isSelected 
-                                ? 'bg-purple-500/10 border-l-2 border-purple-500 text-zinc-100' 
+                              isSelected
+                                ? 'bg-purple-500/10 border-l-2 border-purple-500 text-zinc-100'
                                 : 'hover:bg-zinc-900/40 text-zinc-400 hover:text-zinc-200'
                             }`}
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <span className="text-xs font-bold font-mono truncate">{doc.filename}</span>
-                              <span className={`px-1.5 py-0.5 rounded text-[8px] font-mono uppercase tracking-wider shrink-0 ${
-                                doc.status === "ready" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
-                                doc.status === "processing" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse" :
-                                "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                              }`}>
+                              <span className="text-xs font-bold font-mono truncate">
+                                {doc.filename}
+                              </span>
+                              <span
+                                className={`px-1.5 py-0.5 rounded text-[8px] font-mono uppercase tracking-wider shrink-0 ${
+                                  doc.status === 'ready'
+                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                    : doc.status === 'processing'
+                                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse'
+                                      : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                }`}
+                              >
                                 {doc.status}
                               </span>
                             </div>
@@ -993,7 +1037,9 @@ export default function Home() {
                 {isLoadingDoc ? (
                   <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-3">
                     <div className="w-8 h-8 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
-                    <p className="text-xs text-zinc-400 font-mono">Decoding document insights offline...</p>
+                    <p className="text-xs text-zinc-400 font-mono">
+                      Decoding document insights offline...
+                    </p>
                   </div>
                 ) : selectedDoc ? (
                   <div className="flex-1 flex flex-col overflow-hidden h-full">
@@ -1001,8 +1047,12 @@ export default function Home() {
                     <div className="bg-zinc-900/40 p-4 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-purple-400"><Sparkles size={14} /></span>
-                          <h3 className="text-sm font-bold text-zinc-100">{selectedDoc.filename}</h3>
+                          <span className="text-purple-400">
+                            <Sparkles size={14} />
+                          </span>
+                          <h3 className="text-sm font-bold text-zinc-100">
+                            {selectedDoc.filename}
+                          </h3>
                         </div>
                         <p className="text-[10px] text-zinc-500 font-mono mt-1">
                           ID: {selectedDoc.id} | Size: {formatBytes(selectedDoc.file_size)}
@@ -1015,7 +1065,6 @@ export default function Home() {
 
                     {/* Content Scroll Area */}
                     <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-zinc-800/80">
-                      
                       {/* Summary Section */}
                       <div className="space-y-2">
                         <h4 className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider">
@@ -1025,7 +1074,9 @@ export default function Home() {
                           {selectedDoc.extracted_knowledge.summary ? (
                             <MarkdownRenderer content={selectedDoc.extracted_knowledge.summary} />
                           ) : (
-                            <p className="italic text-zinc-500">Summary generation pending or failed.</p>
+                            <p className="italic text-zinc-500">
+                              Summary generation pending or failed.
+                            </p>
                           )}
                         </div>
                       </div>
@@ -1035,21 +1086,27 @@ export default function Home() {
                         <h4 className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider">
                           2. Extracted Entities
                         </h4>
-                        {selectedDoc.extracted_knowledge.entities && selectedDoc.extracted_knowledge.entities.length > 0 ? (
+                        {selectedDoc.extracted_knowledge.entities &&
+                        selectedDoc.extracted_knowledge.entities.length > 0 ? (
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                            {["Person", "Organization", "Location", "Date"].map((type) => {
+                            {['Person', 'Organization', 'Location', 'Date'].map((type) => {
                               const typedEntities = selectedDoc.extracted_knowledge.entities.filter(
-                                (e: any) => e.type === type
+                                (e: any) => e.type === type,
                               );
                               if (typedEntities.length === 0) return null;
                               return (
-                                <div key={type} className="p-3 rounded-lg border border-zinc-800/60 bg-zinc-950/20 space-y-1.5">
+                                <div
+                                  key={type}
+                                  className="p-3 rounded-lg border border-zinc-800/60 bg-zinc-950/20 space-y-1.5"
+                                >
                                   <span className="text-[9px] font-mono font-bold text-purple-400 uppercase tracking-wider">
                                     {type}s
                                   </span>
                                   <ul className="space-y-1 text-[10px] text-zinc-300 truncate">
                                     {typedEntities.map((ent: any, i: number) => (
-                                      <li key={i} title={ent.name} className="truncate">• {ent.name}</li>
+                                      <li key={i} title={ent.name} className="truncate">
+                                        • {ent.name}
+                                      </li>
                                     ))}
                                   </ul>
                                 </div>
@@ -1068,14 +1125,22 @@ export default function Home() {
                         <h4 className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider">
                           3. Key Facts & Insights
                         </h4>
-                        {selectedDoc.extracted_knowledge.key_facts && selectedDoc.extracted_knowledge.key_facts.length > 0 ? (
+                        {selectedDoc.extracted_knowledge.key_facts &&
+                        selectedDoc.extracted_knowledge.key_facts.length > 0 ? (
                           <ul className="space-y-1.5">
-                            {selectedDoc.extracted_knowledge.key_facts.map((fact: string, idx: number) => (
-                              <li key={idx} className="p-2.5 rounded border border-zinc-800/40 bg-zinc-950/20 text-xs text-zinc-300 flex items-start gap-2.5 leading-relaxed">
-                                <span className="text-purple-400 font-mono shrink-0">[{idx+1}]</span>
-                                <span>{fact}</span>
-                              </li>
-                            ))}
+                            {selectedDoc.extracted_knowledge.key_facts.map(
+                              (fact: string, idx: number) => (
+                                <li
+                                  key={idx}
+                                  className="p-2.5 rounded border border-zinc-800/40 bg-zinc-950/20 text-xs text-zinc-300 flex items-start gap-2.5 leading-relaxed"
+                                >
+                                  <span className="text-purple-400 font-mono shrink-0">
+                                    [{idx + 1}]
+                                  </span>
+                                  <span>{fact}</span>
+                                </li>
+                              ),
+                            )}
                           </ul>
                         ) : (
                           <div className="p-3 rounded-lg border border-zinc-850 bg-zinc-950/20 text-center text-zinc-500 italic text-[11px]">
@@ -1089,19 +1154,25 @@ export default function Home() {
                         <h4 className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider">
                           4. Action Items & Next Steps
                         </h4>
-                        {selectedDoc.extracted_knowledge.action_items && selectedDoc.extracted_knowledge.action_items.length > 0 ? (
+                        {selectedDoc.extracted_knowledge.action_items &&
+                        selectedDoc.extracted_knowledge.action_items.length > 0 ? (
                           <ul className="space-y-1.5">
-                            {selectedDoc.extracted_knowledge.action_items.map((item: string, idx: number) => (
-                              <li key={idx} className="p-2.5 rounded border border-zinc-800/40 bg-zinc-950/20 text-xs text-zinc-300 flex items-center gap-3">
-                                <input 
-                                  type="checkbox" 
-                                  readOnly 
-                                  checked={false} 
-                                  className="rounded border-zinc-700 bg-zinc-800 text-purple-500 focus:ring-0 focus:ring-offset-0 h-3.5 w-3.5 shrink-0 cursor-pointer"
-                                />
-                                <span className="leading-relaxed">{item}</span>
-                              </li>
-                            ))}
+                            {selectedDoc.extracted_knowledge.action_items.map(
+                              (item: string, idx: number) => (
+                                <li
+                                  key={idx}
+                                  className="p-2.5 rounded border border-zinc-800/40 bg-zinc-950/20 text-xs text-zinc-300 flex items-center gap-3"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    readOnly
+                                    checked={false}
+                                    className="rounded border-zinc-700 bg-zinc-800 text-purple-500 focus:ring-0 focus:ring-offset-0 h-3.5 w-3.5 shrink-0 cursor-pointer"
+                                  />
+                                  <span className="leading-relaxed">{item}</span>
+                                </li>
+                              ),
+                            )}
                           </ul>
                         ) : (
                           <div className="p-3 rounded-lg border border-zinc-850 bg-zinc-950/20 text-center text-emerald-500/50 italic text-[11px]">
@@ -1109,27 +1180,28 @@ export default function Home() {
                           </div>
                         )}
                       </div>
-
                     </div>
                   </div>
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-zinc-500 space-y-3">
                     <Sparkles className="text-zinc-700 animate-pulse" size={32} />
                     <div className="space-y-1 max-w-sm">
-                      <h4 className="text-xs font-bold text-zinc-400">Inspect Extracted Intelligence</h4>
+                      <h4 className="text-xs font-bold text-zinc-400">
+                        Inspect Extracted Intelligence
+                      </h4>
                       <p className="text-[11px] text-zinc-500 leading-relaxed">
-                        Select an uploaded document from the list to reveal local summaries, key concepts, named entities, checklist items, and outline metrics.
+                        Select an uploaded document from the list to reveal local summaries, key
+                        concepts, named entities, checklist items, and outline metrics.
                       </p>
                     </div>
                   </div>
                 )}
               </div>
-
             </div>
           )}
 
           {/* TAB 3: SQLITE MEMORY */}
-          {activeTab === "memory" && (
+          {activeTab === 'memory' && (
             <div className="flex-1 p-8 overflow-y-auto max-w-4xl mx-auto space-y-6">
               <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/20 space-y-4">
                 <div className="flex items-center gap-3">
@@ -1137,16 +1209,23 @@ export default function Home() {
                     <Database className="text-pink-400" size={20} />
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-zinc-100">Persistent SQLite Memory Core</h2>
+                    <h2 className="text-base font-bold text-zinc-100">
+                      Persistent SQLite Memory Core
+                    </h2>
                     <p className="text-xs text-zinc-400">Active facts & preference storage</p>
                   </div>
                 </div>
                 <p className="text-xs text-zinc-300 leading-relaxed">
-                  FRIDAY remembers user details, context, and persistent logs across sessions. The memory bank is structured around a local SQLite database that records conversation nodes, key facts about the user, and custom tags for long-term recall.
+                  FRIDAY remembers user details, context, and persistent logs across sessions. The
+                  memory bank is structured around a local SQLite database that records conversation
+                  nodes, key facts about the user, and custom tags for long-term recall.
                 </p>
-                
+
                 {/* Add new memory fact */}
-                <form onSubmit={handleAddMemory} className="flex gap-2 bg-zinc-900/20 p-4 border border-zinc-800 rounded-lg">
+                <form
+                  onSubmit={handleAddMemory}
+                  className="flex gap-2 bg-zinc-900/20 p-4 border border-zinc-800 rounded-lg"
+                >
                   <input
                     type="text"
                     value={newMemKey}
@@ -1172,7 +1251,9 @@ export default function Home() {
                 <div className="border border-zinc-800 rounded-lg overflow-hidden font-mono text-xs">
                   <div className="bg-zinc-900/60 px-4 py-2 border-b border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-wider flex justify-between items-center">
                     <span>SQLite Database Memory Table</span>
-                    <span className="text-[9px] text-pink-400 animate-pulse">● Live Connection</span>
+                    <span className="text-[9px] text-pink-400 animate-pulse">
+                      ● Live Connection
+                    </span>
                   </div>
                   <table className="w-full text-left bg-zinc-950/20">
                     <thead>
@@ -1186,10 +1267,15 @@ export default function Home() {
                     <tbody className="text-zinc-400 text-[11px]">
                       {memories.length > 0 ? (
                         memories.map((mem) => (
-                          <tr key={mem.key} className="border-b border-zinc-900 hover:bg-zinc-900/10">
+                          <tr
+                            key={mem.key}
+                            className="border-b border-zinc-900 hover:bg-zinc-900/10"
+                          >
                             <td className="p-3 font-semibold text-cyan-400">{mem.key}</td>
                             <td className="p-3">{mem.value}</td>
-                            <td className="p-3 text-[10px] text-zinc-500">{mem.created ? new Date(mem.created).toLocaleDateString() : 'N/A'}</td>
+                            <td className="p-3 text-[10px] text-zinc-500">
+                              {mem.created ? new Date(mem.created).toLocaleDateString() : 'N/A'}
+                            </td>
                             <td className="p-3 text-right">
                               <button
                                 type="button"
@@ -1203,7 +1289,9 @@ export default function Home() {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={4} className="p-4 text-center text-zinc-600 italic">No facts stored in SQLite memory bank yet.</td>
+                          <td colSpan={4} className="p-4 text-center text-zinc-600 italic">
+                            No facts stored in SQLite memory bank yet.
+                          </td>
                         </tr>
                       )}
                     </tbody>
@@ -1214,7 +1302,7 @@ export default function Home() {
           )}
 
           {/* TAB 4: MODULAR PLUGINS */}
-          {activeTab === "plugins" && (
+          {activeTab === 'plugins' && (
             <div className="flex-1 p-8 overflow-y-auto max-w-4xl mx-auto space-y-6">
               <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/20 space-y-4">
                 <div className="flex items-center gap-3">
@@ -1227,13 +1315,18 @@ export default function Home() {
                   </div>
                 </div>
                 <p className="text-xs text-zinc-300 leading-relaxed">
-                  Extensible ecosystem allowing FRIDAY to invoke custom Python plugins and automate OS commands. When FRIDAY identifies a user intent matching a plugin function, it triggers the module (e.g. system controls, file browser, camera feed).
+                  Extensible ecosystem allowing FRIDAY to invoke custom Python plugins and automate
+                  OS commands. When FRIDAY identifies a user intent matching a plugin function, it
+                  triggers the module (e.g. system controls, file browser, camera feed).
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                   {plugins.length > 0 ? (
                     plugins.map((p) => (
-                      <div key={p.id} className="p-5 bg-zinc-950/40 border border-zinc-800 hover:border-zinc-700/60 rounded-xl space-y-4 transition flex flex-col justify-between">
+                      <div
+                        key={p.id}
+                        className="p-5 bg-zinc-950/40 border border-zinc-800 hover:border-zinc-700/60 rounded-xl space-y-4 transition flex flex-col justify-between"
+                      >
                         <div>
                           <div className="flex items-center justify-between">
                             <h4 className="text-xs font-bold text-zinc-200">{p.name}</h4>
@@ -1243,10 +1336,10 @@ export default function Home() {
                           </div>
                           <p className="text-[10px] text-zinc-400 mt-1">{p.desc}</p>
                         </div>
-                        
+
                         {/* Interactive fields per plugin */}
                         <div className="pt-2 border-t border-zinc-900 mt-auto">
-                          {p.id === "volume" && (
+                          {p.id === 'volume' && (
                             <div className="space-y-3">
                               <div className="flex items-center gap-2">
                                 <input
@@ -1257,11 +1350,13 @@ export default function Home() {
                                   onChange={(e) => setVolumeValue(parseInt(e.target.value))}
                                   className="flex-1 accent-emerald-500 bg-zinc-800 h-1 rounded-lg cursor-pointer"
                                 />
-                                <span className="text-[10px] font-mono text-zinc-300 w-8">{volumeValue}%</span>
+                                <span className="text-[10px] font-mono text-zinc-300 w-8">
+                                  {volumeValue}%
+                                </span>
                               </div>
                               <button
                                 type="button"
-                                onClick={() => handleRunPlugin("volume", { value: volumeValue })}
+                                onClick={() => handleRunPlugin('volume', { value: volumeValue })}
                                 className="w-full py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 transition"
                               >
                                 Set Volume
@@ -1269,18 +1364,18 @@ export default function Home() {
                             </div>
                           )}
 
-                          {p.id === "mute" && (
+                          {p.id === 'mute' && (
                             <div className="flex gap-2">
                               <button
                                 type="button"
-                                onClick={() => handleRunPlugin("mute")}
+                                onClick={() => handleRunPlugin('mute')}
                                 className="flex-1 py-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-[10px] font-bold border border-zinc-800 transition"
                               >
                                 Mute System
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleRunPlugin("unmute")}
+                                onClick={() => handleRunPlugin('unmute')}
                                 className="flex-1 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 transition"
                               >
                                 Unmute
@@ -1288,17 +1383,17 @@ export default function Home() {
                             </div>
                           )}
 
-                          {p.id === "unmute" && (
+                          {p.id === 'unmute' && (
                             <button
                               type="button"
-                              onClick={() => handleRunPlugin("unmute")}
+                              onClick={() => handleRunPlugin('unmute')}
                               className="w-full py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 transition"
                             >
                               Unmute System
                             </button>
                           )}
 
-                          {p.id === "open_app" && (
+                          {p.id === 'open_app' && (
                             <div className="space-y-2">
                               <input
                                 type="text"
@@ -1309,7 +1404,7 @@ export default function Home() {
                               />
                               <button
                                 type="button"
-                                onClick={() => handleRunPlugin("open_app", { app: openAppName })}
+                                onClick={() => handleRunPlugin('open_app', { app: openAppName })}
                                 className="w-full py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 transition"
                               >
                                 Open Application
@@ -1317,17 +1412,17 @@ export default function Home() {
                             </div>
                           )}
 
-                          {p.id === "screenshot" && (
+                          {p.id === 'screenshot' && (
                             <button
                               type="button"
-                              onClick={() => handleRunPlugin("screenshot")}
+                              onClick={() => handleRunPlugin('screenshot')}
                               className="w-full py-1.5 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 transition"
                             >
                               Capture Screen
                             </button>
                           )}
 
-                          {p.id === "system_stats" && (
+                          {p.id === 'system_stats' && (
                             <div className="space-y-3">
                               {systemStatsText && (
                                 <pre className="p-2.5 rounded bg-zinc-950 border border-zinc-900 text-[9px] text-zinc-400 font-mono overflow-x-auto leading-relaxed text-left">
@@ -1336,10 +1431,10 @@ export default function Home() {
                               )}
                               <button
                                 type="button"
-                                onClick={() => handleRunPlugin("system_stats")}
+                                onClick={() => handleRunPlugin('system_stats')}
                                 className="w-full py-1.5 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 transition"
                               >
-                                {systemStatsText ? "Refresh Metrics" : "Query Stats"}
+                                {systemStatsText ? 'Refresh Metrics' : 'Query Stats'}
                               </button>
                             </div>
                           )}
@@ -1357,21 +1452,24 @@ export default function Home() {
           )}
 
           {/* TAB 5: SYSTEM STATUS */}
-          {activeTab === "system" && (
+          {activeTab === 'system' && (
             <div className="flex-1 p-8 overflow-y-auto max-w-4xl mx-auto space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                
                 {/* Panel 1 */}
                 <div className="p-5 rounded-xl border border-zinc-800 bg-zinc-900/20 flex flex-col justify-between h-40">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-zinc-300">Ollama API Service</span>
-                    <span className={`h-2 w-2 rounded-full ${status.ollama_connected ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]'}`} />
+                    <span
+                      className={`h-2 w-2 rounded-full ${status.ollama_connected ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]'}`}
+                    />
                   </div>
                   <div>
                     <h3 className="text-2xl font-black text-white font-mono uppercase">
-                      {status.ollama_connected ? "ONLINE" : "OFFLINE"}
+                      {status.ollama_connected ? 'ONLINE' : 'OFFLINE'}
                     </h3>
-                    <p className="text-[10px] text-zinc-500 font-mono mt-1">Host: {status.ollama_host || "N/A"}</p>
+                    <p className="text-[10px] text-zinc-500 font-mono mt-1">
+                      Host: {status.ollama_host || 'N/A'}
+                    </p>
                   </div>
                 </div>
 
@@ -1382,10 +1480,10 @@ export default function Home() {
                     <Cpu size={16} className="text-purple-400" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-white font-mono">
-                      {models.length}
-                    </h3>
-                    <p className="text-[10px] text-zinc-500 font-mono mt-1">Available locally on host</p>
+                    <h3 className="text-2xl font-black text-white font-mono">{models.length}</h3>
+                    <p className="text-[10px] text-zinc-500 font-mono mt-1">
+                      Available locally on host
+                    </p>
                   </div>
                 </div>
 
@@ -1396,13 +1494,12 @@ export default function Home() {
                     <Activity size={16} className="text-cyan-400" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-white font-mono">
-                      CPU-ONLY
-                    </h3>
-                    <p className="text-[10px] text-zinc-500 font-mono mt-1">Privacy-first hardware bound</p>
+                    <h3 className="text-2xl font-black text-white font-mono">CPU-ONLY</h3>
+                    <p className="text-[10px] text-zinc-500 font-mono mt-1">
+                      Privacy-first hardware bound
+                    </p>
                   </div>
                 </div>
-
               </div>
 
               {/* Models List Details */}
@@ -1411,17 +1508,22 @@ export default function Home() {
                 <div className="space-y-3">
                   {models.length > 0 ? (
                     models.map((model) => (
-                      <div key={model.name} className="p-4 bg-zinc-950/40 border border-zinc-800 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div
+                        key={model.name}
+                        className="p-4 bg-zinc-950/40 border border-zinc-800 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      >
                         <div>
                           <p className="text-xs font-bold text-cyan-400 font-mono">{model.name}</p>
                           <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-zinc-500 font-mono mt-1">
-                            <span>Format: {model.details.family || "GGUF"}</span>
-                            <span>Params: {model.details.parameter_size || "N/A"}</span>
-                            <span>Quant: {model.details.quantization_level || "N/A"}</span>
+                            <span>Format: {model.details.family || 'GGUF'}</span>
+                            <span>Params: {model.details.parameter_size || 'N/A'}</span>
+                            <span>Quant: {model.details.quantization_level || 'N/A'}</span>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="text-xs font-mono font-bold text-zinc-300">{formatBytes(model.size)}</p>
+                          <p className="text-xs font-mono font-bold text-zinc-300">
+                            {formatBytes(model.size)}
+                          </p>
                           <p className="text-[9px] text-zinc-600 font-mono">Size on Disk</p>
                         </div>
                       </div>
@@ -1442,13 +1544,14 @@ export default function Home() {
                   Developer Architecture Notice
                 </h4>
                 <p>
-                  To change default model behavior or connection endpoints, edit variables in your local <code className="text-zinc-300 font-mono">backend/core/config.py</code> file. This layout will connect automatically on page load to your local port <code className="text-zinc-300 font-mono">8000</code>.
+                  To change default model behavior or connection endpoints, edit variables in your
+                  local <code className="text-zinc-300 font-mono">backend/core/config.py</code>{' '}
+                  file. This layout will connect automatically on page load to your local port{' '}
+                  <code className="text-zinc-300 font-mono">8000</code>.
                 </p>
               </div>
-
             </div>
           )}
-
         </div>
       </main>
     </div>
