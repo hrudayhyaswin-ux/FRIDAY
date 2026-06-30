@@ -2,6 +2,8 @@ import contextlib
 import json
 import logging
 import os
+import shutil
+import tempfile
 import uuid
 
 from ai.rag_pipeline import query_rag
@@ -23,8 +25,7 @@ class QueryRequest(BaseModel):
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
 async def upload_document(file: UploadFile = File(...)) -> dict:  # noqa: B008
     """Uploads a document for parsing, chunking, and embedding."""
-    temp_dir = "/tmp/friday_docs"
-    os.makedirs(temp_dir, exist_ok=True)
+    temp_dir = tempfile.mkdtemp(prefix="friday_docs_")
 
     file_path = os.path.join(temp_dir, f"{uuid.uuid4()}_{file.filename}")
     try:
@@ -65,8 +66,7 @@ async def upload_document(file: UploadFile = File(...)) -> dict:  # noqa: B008
         logger.error(f"Failed to upload and process document: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 @router.get("")

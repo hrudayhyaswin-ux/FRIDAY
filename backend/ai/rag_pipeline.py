@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Any
 
 from core.db import get_db_connection
@@ -64,7 +65,10 @@ def query_rag(query_text: str, k: int = 5) -> list[dict[str, Any]]:
 def _keyword_search_fallback(query: str, k: int = 5) -> list[dict[str, Any]]:
     """Simple keyword matching fallback over all chunks in SQLite."""
     logger.info("Executing database keyword-search fallback...")
-    words = [w.lower() for w in query.split() if len(w) > 2]
+
+    # Extract only alphanumeric words (3+ chars) — this whitelist ensures
+    # no special characters from user input can reach the SQL statement.
+    words = re.findall(r"\b\w{3,}\b", query.lower())
     if not words:
         return []
 
@@ -73,20 +77,26 @@ def _keyword_search_fallback(query: str, k: int = 5) -> list[dict[str, Any]]:
     results = []
 
     try:
-        # Build wildcard query
-        like_clauses = " OR ".join(["dc.content LIKE ?" for _ in words])
+        # Build wildcard query with parameterized placeholders.
+        # Only the COUNT of placeholders varies with user input;
+        # the actual word values are bound as parameters via cursor.execute()
+        # and NEVER interpolated into the SQL string.
+        placeholders = " OR ".join(["dc.content LIKE ?" for _ in words])
         params = [f"%{w}%" for w in words]
 
-        cursor.execute(
-            f"""
-            SELECT dc.content, d.filename
-            FROM document_chunks dc
-            JOIN documents d ON dc.document_id = d.id
-            WHERE {like_clauses}
-            LIMIT 20
-        """,
-            params,
+        # B608 justification: words are regex-whitelisted to \w{3,} only,
+        # so no special characters reach the SQL string. The dynamic part
+        # is purely the COUNT of LIKE ? clauses; all word values are bound
+        # as parameters, never interpolated.
+        query_sql = (
+            "SELECT dc.content, d.filename "  # nosec
+            "FROM document_chunks dc "
+            "JOIN documents d ON dc.document_id = d.id "
+            "WHERE " + placeholders + " "
+            "LIMIT 20"
         )
+
+        cursor.execute(query_sql, params)
 
         rows = cursor.fetchall()
 

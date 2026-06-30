@@ -26,8 +26,7 @@ Thumbs.db
 .mypy-cache/
 .coverage/
 
-# Pre-commit
-.secrets.baseline
+# Pre-commit local generated files (baseline is tracked, regenerate with detect-secrets scan)
 
 # IDE
 .vscode/
