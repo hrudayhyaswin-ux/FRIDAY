@@ -5,7 +5,6 @@ stages:
   - type-check
   - security
   - test
-  - build
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
@@ -170,29 +169,3 @@ backend-pytest:
       - backend/coverage.xml
     when: always
 
-# ---------------------------------------------------------------------------
-# Stage: build
-# ---------------------------------------------------------------------------
-
-.docker-base: &docker-base
-  image: docker:20.10.16
-  services:
-    - docker:dind
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
-  before_script:
-    - docker info > /dev/null 2>&1 || exit 1
-    - if [ -z "$CI_REGISTRY_IMAGE" ]; then export CI_REGISTRY_IMAGE="friday" && echo "CI_REGISTRY_IMAGE not set — using local tag 'friday'"; fi
-
-build-backend-docker:
-  <<: *docker-base
-  stage: build
-  script:
-    - cd backend && docker build -t "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" .
-
-build-frontend-docker:
-  <<: *docker-base
-  stage: build
-  script:
-    - cd frontend && docker build -t "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" .
