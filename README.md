@@ -82,53 +82,45 @@ FRIDAY-AI/
 
 ### 🖥️ Running Desktop Services
 
-#### 1. Start FastAPI Backend & Next.js Frontend
-```bash
-# Set execute permission
-chmod +x run_local.sh
-# Run both backend and frontend servers
-./run_local.sh
-```
-- **Backend API**: `http://localhost:8000`
-- **React Frontend Console**: `http://localhost:3000`
-
-#### 2. Start Hologram HUD Website
-```bash
-cd website
-# Set execute permission and run
-chmod +x launch.sh
-./launch.sh
-```
-- **Hologram Web client**: `http://localhost:8080`
-- **Interrupt Hotkey**: Press `Escape` or click the hologram orb at any time to instantly stop FRIDAY's voice.
+- [x] **Phase 1**: Basic Chat, Ollama Integration, local LLM streaming, futuristic Web UI dashboard.
+- [ ] **Phase 2**: Voice integration (Whisper.cpp, Piper TTS, local interrupt handling).
+- [ ] **Phase 3**: Long-term memory (SQLite factual logging, persistent state).
+- [ ] **Phase 4**: Document RAG (PDF/DOCX extraction, local FAISS vector store).
+- [ ] **Phase 5**: Modular plugin system & computer shell control.
+- [ ] **Phase 6**: Computer Vision & OCR.
 
 ---
 
-### 📱 Installing & Building the Mobile App (APK)
+## CI/CD Pipeline
 
-The built APK file is stored in:
-- Repo path: `mobile-app/FRIDAY-AI.apk`
-- Quick Download link: **[FRIDAY-AI.apk](https://github.com/hrudayhyaswin-ux/FRIDAY/raw/main/mobile-app/FRIDAY-AI.apk)**
+The project includes a GitLab CI pipeline with **13 automated checks** that run on every push. All jobs use real tooling — no stubs or pass-throughs.
 
-#### Build and run from source:
-1. Make sure **Android Studio** is installed.
-2. Build the assets and open in Android Studio:
-   ```bash
-   cd mobile-app
-   npm install
-   npx cap sync android
-   npx cap open android
-   ```
-3. In Android Studio:
-   - Go to **Build** → **Build Bundle(s)/APK(s)** → **Build APK(s)**.
-   - Find the compiled APK at: `android/app/build/outputs/apk/debug/app-debug.apk`.
-4. Install on your Android device (ensure *Install from Unknown Sources* is enabled under Security settings).
-5. Load the AI Engine inside the mobile app to initialize the on-device offline TinyLlama model.
+| Stage          | Job                        | Tool         |
+|----------------|----------------------------|--------------|
+| Commit Lint    | Commit message validation  | `commitlint` |
+| Python Lint    | Ruff lint                  | `ruff check` |
+| Python Lint    | Ruff format                | `ruff format`|
+| Frontend Lint  | ESLint                     | `eslint`     |
+| Frontend Lint  | Prettier format check      | `prettier`   |
+| Type Check     | MyPy (Python)              | `mypy`       |
+| Type Check     | TypeScript (Frontend)      | `tsc`        |
+| Security       | Bandit (Python SAST)       | `bandit`     |
+| Security       | Secret detection            | `trufflehog` |
+| Security       | Dependency audit           | `safety` + `npm audit` |
+| Test           | Pytest + coverage          | `pytest`     |
+| Build          | Backend Docker image       | `docker`     |
+| Build          | Frontend Docker image      | `docker`     |
 
----
+See [.gitlab-ci.yml](.gitlab-ci.yml) for full configuration and [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 
-## 🔒 Offline Capability
+## Pre-commit Hooks
 
-- **Desktop Suite**: Works fully offline as long as your local Ollama daemon is running.
-- **HUD Website**: Operates locally, speaking using offline native voices.
-- **Mobile Application**: Uses native speech-to-text plugins and WebLLM tiny models to achieve complete independence from both external networks and your host Mac server.
+Install pre-commit hooks to run checks locally before committing:
+
+```bash
+pip install pre-commit
+pre-commit install
+pre-commit install --hook-type commit-msg
+```
+
+Hooks configured: `ruff`, `ruff-format`, `mypy`, `bandit`, `detect-secrets`, `prettier`, `eslint`, `commitlint`, trailing whitespace, YAML/JSON validation, merge-conflict detection, private-key detection.

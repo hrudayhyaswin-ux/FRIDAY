@@ -34,6 +34,7 @@ def test_chunker():
         assert "token_count" in chunk
         assert len(chunk["content"]) > 0
 
+@pytest.mark.skipif(not os.environ.get("OLLAMA_HOST"), reason="Ollama not available")
 def test_embeddings():
     text = "Query embedding"
     vector = get_embedding(text)
@@ -63,11 +64,13 @@ def test_vector_store(tmp_path):
     store.delete_document_vectors("doc_1")
     assert len(store.mappings) == 0
 
+@pytest.mark.skipif(not os.environ.get("OLLAMA_HOST"), reason="Ollama not available")
 def test_summarizer():
     text = "The quick brown fox jumps over the lazy dog."
     summary = generate_summary(text)
     assert len(summary) > 0
 
+@pytest.mark.skipif(not os.environ.get("OLLAMA_HOST"), reason="Ollama not available")
 def test_entity_extractor():
     text = "John Doe works at Google in New York. The launch date is 2026-06-29."
     entities = extract_entities(text)
@@ -75,6 +78,7 @@ def test_entity_extractor():
     # Check that at least the offline heuristic extracted something or it returned a list
     assert len(entities) >= 0
 
+@pytest.mark.skipif(not os.environ.get("OLLAMA_HOST"), reason="Ollama not available")
 def test_insight_extractor():
     text = "We must launch the product next week. The codebase is fully local. Action item: complete the tests."
     insights = extract_insights(text)

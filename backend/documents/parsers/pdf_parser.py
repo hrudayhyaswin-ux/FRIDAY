@@ -1,7 +1,7 @@
-import os
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 def parse_pdf(file_path: str) -> str:
     """Extracts text from a PDF file using PyMuPDF (fitz) or pypdf fallback."""
@@ -9,6 +9,7 @@ def parse_pdf(file_path: str) -> str:
     try:
         # Try PyMuPDF (fitz)
         import fitz
+
         logger.info(f"Parsing PDF with PyMuPDF: {file_path}")
         doc = fitz.open(file_path)
         for page in doc:
@@ -21,10 +22,11 @@ def parse_pdf(file_path: str) -> str:
         logger.info(f"PyMuPDF not installed. Falling back to pypdf for {file_path}")
     except Exception as e:
         logger.error(f"PyMuPDF error, trying pypdf: {e}")
-        
+
     try:
         # Try pypdf fallback
         from pypdf import PdfReader
+
         reader = PdfReader(file_path)
         for page in reader.pages:
             page_text = page.extract_text()

@@ -1,22 +1,15 @@
-import urllib.request
 import json
 import sys
+import urllib.request
 
 url = "http://localhost:8000/api/v1/chat"
 payload = {
     "model": "phi3:latest",
-    "messages": [
-        {"role": "user", "content": "Hello! Introduce yourself in one short sentence as FRIDAY."}
-    ]
+    "messages": [{"role": "user", "content": "Hello! Introduce yourself in one short sentence as FRIDAY."}],
 }
 
 data = json.dumps(payload).encode("utf-8")
-req = urllib.request.Request(
-    url, 
-    data=data, 
-    headers={"Content-Type": "application/json"},
-    method="POST"
-)
+req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
 
 print("Initiating connection to local FRIDAY API server (http://localhost:8000)...")
 try:

@@ -1,12 +1,15 @@
 import logging
-from typing import List, Dict, Any
+import re
+from typing import Any
+
 from core.db import get_db_connection
 from documents.embeddings import get_embedding
 from memory.vector_store import vector_store
 
 logger = logging.getLogger(__name__)
 
-def query_rag(query_text: str, k: int = 5) -> List[Dict[str, Any]]:
+
+def query_rag(query_text: str, k: int = 5) -> list[dict[str, Any]]:
     """
     Queries the persistent vector store using semantic search and fetches
     the matching chunk text from the SQLite database.
@@ -16,69 +19,87 @@ def query_rag(query_text: str, k: int = 5) -> List[Dict[str, Any]]:
 
     # 1. Generate embedding for query
     query_vector = get_embedding(query_text)
-    
+
     # 2. Search in vector store
     # Search returns list of (chunk_id, document_id, score)
     matches = vector_store.search(query_vector, k=k)
-    
+
     if not matches:
         # Fallback to keyword-based search on SQLite if vector store is empty
         return _keyword_search_fallback(query_text, k)
-        
+
     # 3. Retrieve chunk text from database
     results = []
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     try:
-        for chunk_id, doc_id, score in matches:
-            cursor.execute('''
-                SELECT dc.content, d.filename 
+        for chunk_id, _, score in matches:
+            cursor.execute(
+                """
+                SELECT dc.content, d.filename
                 FROM document_chunks dc
                 JOIN documents d ON dc.document_id = d.id
                 WHERE dc.id = ?
-            ''', (chunk_id,))
+            """,
+                (chunk_id,),
+            )
             row = cursor.fetchone()
             if row:
-                results.append({
-                    "filename": row["filename"],
-                    "text": row["content"],
-                    "score": score,
-                    "method": "semantic"
-                })
+                results.append(
+                    {
+                        "filename": row["filename"],
+                        "text": row["content"],
+                        "score": score,
+                        "method": "semantic",
+                    }
+                )
     except Exception as e:
         logger.error(f"Error fetching RAG chunks from database: {e}")
     finally:
         conn.close()
-        
+
     return results
 
-def _keyword_search_fallback(query: str, k: int = 5) -> List[Dict[str, Any]]:
+
+def _keyword_search_fallback(query: str, k: int = 5) -> list[dict[str, Any]]:
     """Simple keyword matching fallback over all chunks in SQLite."""
     logger.info("Executing database keyword-search fallback...")
-    words = [w.lower() for w in query.split() if len(w) > 2]
+
+    # Extract only alphanumeric words (3+ chars) — this whitelist ensures
+    # no special characters from user input can reach the SQL statement.
+    words = re.findall(r"\b\w{3,}\b", query.lower())
     if not words:
         return []
-        
+
     conn = get_db_connection()
     cursor = conn.cursor()
     results = []
-    
+
     try:
-        # Build wildcard query
-        like_clauses = " OR ".join(["dc.content LIKE ?" for _ in words])
+        # Build wildcard query with parameterized placeholders.
+        # Only the COUNT of placeholders varies with user input;
+        # the actual word values are bound as parameters via cursor.execute()
+        # and NEVER interpolated into the SQL string.
+        placeholders = " OR ".join(["dc.content LIKE ?" for _ in words])
         params = [f"%{w}%" for w in words]
-        
-        cursor.execute(f'''
-            SELECT dc.content, d.filename 
-            FROM document_chunks dc
-            JOIN documents d ON dc.document_id = d.id
-            WHERE {like_clauses}
-            LIMIT 20
-        ''', params)
-        
+
+        # B608 justification: words are regex-whitelisted to \w{3,} only,
+        # so no special characters reach the SQL string. The dynamic part
+        # is purely the COUNT of LIKE ? clauses; all word values are bound
+        # as parameters, never interpolated.
+        query_sql = (
+            "SELECT dc.content, d.filename "  # nosec
+            "FROM document_chunks dc "
+            "JOIN documents d ON dc.document_id = d.id "
+            "WHERE " + placeholders + " "
+            "LIMIT 20"
+        )
+
+        cursor.execute(query_sql, params)
+
         rows = cursor.fetchall()
-        
+
         # Score rows based on word overlap count
         scored_results = []
         query_words_set = set(words)
@@ -86,13 +107,15 @@ def _keyword_search_fallback(query: str, k: int = 5) -> List[Dict[str, Any]]:
             content_words = set(row["content"].lower().split())
             overlap = len(query_words_set.intersection(content_words))
             if overlap > 0:
-                scored_results.append({
-                    "filename": row["filename"],
-                    "text": row["content"],
-                    "score": float(overlap) / len(query_words_set),
-                    "method": "keyword"
-                })
-                
+                scored_results.append(
+                    {
+                        "filename": row["filename"],
+                        "text": row["content"],
+                        "score": float(overlap) / len(query_words_set),
+                        "method": "keyword",
+                    }
+                )
+
         # Sort and take top k
         scored_results.sort(key=lambda x: x["score"], reverse=True)
         results = scored_results[:k]
@@ -100,5 +123,5 @@ def _keyword_search_fallback(query: str, k: int = 5) -> List[Dict[str, Any]]:
         logger.error(f"Keyword search fallback failed: {e}")
     finally:
         conn.close()
-        
+
     return results

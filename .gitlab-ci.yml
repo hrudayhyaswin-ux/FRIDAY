@@ -1,42 +1,175 @@
 stages:
-  - lint
-  - build
+  - commit-lint
+  - lint-python
+  - lint-frontend
+  - type-check
+  - security
+  - test
 
-# Lint and verify syntax for Next.js frontend
-frontend-lint:
-  stage: lint
-  image: node:18-alpine
-  script:
-    - cd frontend
-    - npm install --legacy-peer-deps
-    - npm run lint || true # Check for JS syntax errors without breaking build on warnings
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
+  NPM_CACHE_DIR: "$CI_PROJECT_DIR/.npm-cache"
+  RUFF_CACHE_DIR: "$CI_PROJECT_DIR/.ruff-cache"
+  MYPY_CACHE_DIR: "$CI_PROJECT_DIR/.mypy-cache"
 
-# Lint and verify basic Python syntax rules
-backend-lint:
-  stage: lint
-  image: python:3.10-slim
-  script:
-    - cd backend
-    - pip install flake8
-    # Stop build on syntax errors or undefined names
-    - flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=venv
+cache:
+  key: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+  paths:
+    - .pip-cache/
+    - .npm-cache/
+    - .ruff-cache/
+    - .mypy-cache/
+    - frontend/node_modules/
 
-# Verify Dockerfile builds correctly for Backend
-build-backend-docker:
-  stage: build
-  image: docker:20.10.16
-  variables:
-    DOCKER_HOST: unix:///var/run/docker.sock
-  script:
-    - cd backend
-    - docker build -t friday-backend:latest .
+# ---------------------------------------------------------------------------
+# Stage: commit-lint
+# ---------------------------------------------------------------------------
 
-# Verify Dockerfile builds correctly for Frontend
-build-frontend-docker:
-  stage: build
-  image: docker:20.10.16
-  variables:
-    DOCKER_HOST: unix:///var/run/docker.sock
+commit-lint:
+  stage: commit-lint
+  image: python:3.13-slim
+  before_script:
+    - pip install --quiet commitlint-ai 2>/dev/null || pip install --quiet pydantic click 2>/dev/null
   script:
-    - cd frontend
-    - docker build -t friday-frontend:latest .
+    - |
+      if echo "${CI_COMMIT_TITLE:-$(git log -1 --pretty=%B)}" | grep -qE '^Merge branch'; then
+        echo "Merge commit detected — skipping conventional commit check"
+        exit 0
+      fi
+      if [ -n "$CI_COMMIT_TITLE" ]; then
+        echo "Validating commit message: $CI_COMMIT_TITLE"
+        echo "$CI_COMMIT_TITLE" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+'
+      else
+        echo "No CI_COMMIT_TITLE — checking recent commit instead"
+        git log -1 --pretty=%B | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+'
+      fi && echo "Commit message follows conventional commits" || { echo "ERROR: Commit message must follow Conventional Commits format: type(scope): description"; exit 1; }
+
+# ---------------------------------------------------------------------------
+# Stage: lint-python
+# ---------------------------------------------------------------------------
+
+backend-ruff-lint:
+  stage: lint-python
+  image: python:3.13-slim
+  before_script:
+    - pip install --quiet ruff
+  script:
+    - ruff check backend/
+  cache:
+    key: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .ruff-cache/
+      - .pip-cache/
+
+backend-ruff-format:
+  stage: lint-python
+  image: python:3.13-slim
+  before_script:
+    - pip install --quiet ruff
+  script:
+    - ruff format --check backend/
+
+# ---------------------------------------------------------------------------
+# Stage: lint-frontend
+# ---------------------------------------------------------------------------
+
+.frontend-base: &frontend-base
+  image: node:20-alpine
+  cache:
+    key: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+    paths:
+      - frontend/node_modules/
+      - .npm-cache/
+  before_script:
+    - cd frontend && npm install --legacy-peer-deps
+
+frontend-eslint:
+  <<: *frontend-base
+  stage: lint-frontend
+  script:
+    - npm run lint
+
+frontend-format-check:
+  <<: *frontend-base
+  stage: lint-frontend
+  script:
+    - npx prettier --check "app/**/*.{ts,tsx}" "components/**/*.{ts,tsx}"
+
+# ---------------------------------------------------------------------------
+# Stage: type-check
+# ---------------------------------------------------------------------------
+
+backend-mypy:
+  stage: type-check
+  image: python:3.13-slim
+  before_script:
+    - pip install --quiet mypy fastapi pydantic uvicorn ollama
+  script:
+    - mypy backend/ --cache-dir .mypy-cache
+  cache:
+    key: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .mypy-cache/
+      - .pip-cache/
+
+frontend-tsc:
+  <<: *frontend-base
+  stage: type-check
+  script:
+    - npx tsc --noEmit
+
+# ---------------------------------------------------------------------------
+# Stage: security
+# ---------------------------------------------------------------------------
+
+backend-bandit:
+  stage: security
+  image: python:3.13-slim
+  before_script:
+    - pip install --quiet bandit
+  script:
+    - bandit -r backend/api backend/ai backend/core backend/database backend/memory backend/plugins backend/speech backend/tts -c pyproject.toml
+  allow_failure: true
+
+secrets-detection:
+  stage: security
+  image: python:3.13-slim
+  before_script:
+    - apt-get update && apt-get install -y git 2>/dev/null
+    - pip install --quiet detect-secrets
+  script:
+    - detect-secrets scan --baseline .secrets.baseline --exclude-files 'package-lock\.json|\.git/|node_modules/|venv/|__pycache__/|\.next/|\.pytest_cache/|frontend/'
+  allow_failure: true
+
+dependency-audit:
+  stage: security
+  image: python:3.13-slim
+  before_script:
+    - apt-get update && apt-get install -y nodejs npm 2>/dev/null
+    - pip install --quiet safety
+  script:
+    - safety check --full-report -r backend/requirements.txt
+    - cd frontend && npm audit --audit-level=high
+  allow_failure: true
+
+# ---------------------------------------------------------------------------
+# Stage: test
+# ---------------------------------------------------------------------------
+
+backend-pytest:
+  stage: test
+  image: python:3.13-slim
+  before_script:
+    - apt-get update && apt-get install -y ffmpeg build-essential 2>/dev/null
+    - pip install --quiet -r backend/requirements.txt pytest pytest-cov httpx
+  script:
+    - cd backend && python3 -m pytest ../tests/ -v --cov=. --cov-report=term --cov-report=xml
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: backend/coverage.xml
+    paths:
+      - backend/coverage.xml
+    when: always
+
