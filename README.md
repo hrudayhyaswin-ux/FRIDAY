@@ -78,18 +78,58 @@ FRIDAY-AI/
 3. **Ollama**: Installed and running locally.
    - Pull a model: `ollama pull phi3` or `ollama pull gemma2`
 
----
-
 ### 🖥️ Running Desktop Services
 
-- [x] **Phase 1**: Basic Chat, Ollama Integration, local LLM streaming, futuristic Web UI dashboard.
-- [ ] **Phase 2**: Voice integration (Whisper.cpp, Piper TTS, local interrupt handling).
-- [ ] **Phase 3**: Long-term memory (SQLite factual logging, persistent state).
-- [ ] **Phase 4**: Document RAG (PDF/DOCX extraction, local FAISS vector store).
-- [ ] **Phase 5**: Modular plugin system & computer shell control.
-- [ ] **Phase 6**: Computer Vision & OCR.
+#### 1. Start FastAPI Backend & Next.js Frontend
+```bash
+# Set execute permission
+chmod +x run_local.sh
+# Run both backend and frontend servers
+./run_local.sh
+```
+- **Backend API**: `http://localhost:8000`
+- **React Frontend Console**: `http://localhost:3000`
+
+#### 2. Start Hologram HUD Website
+```bash
+cd website
+# Set execute permission and run
+chmod +x launch.sh
+./launch.sh
+```
+- **Hologram Web client**: `http://localhost:8080`
+- **Interrupt Hotkey**: Press `Escape` or click the hologram orb at any time to instantly stop FRIDAY's voice.
 
 ---
+
+### 📱 Installing & Building the Mobile App (APK)
+
+The built APK file is stored in:
+- Repo path: `mobile-app/FRIDAY-AI.apk`
+- Quick Download link: **[FRIDAY-AI.apk](https://github.com/hrudayhyaswin-ux/FRIDAY/raw/main/mobile-app/FRIDAY-AI.apk)**
+
+#### Build and run from source:
+1. Make sure **Android Studio** is installed.
+2. Build the assets and open in Android Studio:
+   ```bash
+   cd mobile-app
+   npm install
+   npx cap sync android
+   npx cap open android
+   ```
+3. In Android Studio:
+   - Go to **Build** → **Build Bundle(s)/APK(s)** → **Build APK(s)**.
+   - Find the compiled APK at: `android/app/build/outputs/apk/debug/app-debug.apk`.
+4. Install on your Android device (ensure *Install from Unknown Sources* is enabled under Security settings).
+5. Load the AI Engine inside the mobile app to initialize the on-device offline TinyLlama model.
+
+---
+
+## 🔒 Offline Capability
+
+- **Desktop Suite**: Works fully offline as long as your local Ollama daemon is running.
+- **HUD Website**: Operates locally, speaking using offline native voices.
+- **Mobile Application**: Uses native speech-to-text plugins and WebLLM tiny models to achieve complete independence from both external networks and your host Mac server.
 
 ## CI/CD Pipeline
 
