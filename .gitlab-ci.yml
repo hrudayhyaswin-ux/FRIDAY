@@ -132,6 +132,7 @@ secrets-detection:
   stage: security
   image: python:3.13-slim
   before_script:
+    - apt-get update && apt-get install -y git 2>/dev/null
     - pip install --quiet detect-secrets
   script:
     - detect-secrets scan --baseline .secrets.baseline --exclude-files 'package-lock\.json|\.git/|node_modules/|venv/|__pycache__/|\.next/|\.pytest_cache/|frontend/'
