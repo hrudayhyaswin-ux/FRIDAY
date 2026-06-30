@@ -174,18 +174,27 @@ backend-pytest:
 # Stage: build
 # ---------------------------------------------------------------------------
 
-build-backend-docker:
-  stage: build
+.docker-base: &docker-base
   image: docker:20.10.16
   variables:
     DOCKER_HOST: unix:///var/run/docker.sock
+  before_script:
+    - |
+      if [ -z "$CI_REGISTRY_IMAGE" ]; then
+        # GitLab Container Registry is not configured for this project.
+        # Use a local-only image name so builds still succeed.
+        export CI_REGISTRY_IMAGE="friday"
+        echo "CI_REGISTRY_IMAGE not set — using local tag 'friday'"
+      fi
+
+build-backend-docker:
+  <<: *docker-base
+  stage: build
   script:
-    - cd backend && docker build -t $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA .
+    - cd backend && docker build -t "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" .
 
 build-frontend-docker:
+  <<: *docker-base
   stage: build
-  image: docker:20.10.16
-  variables:
-    DOCKER_HOST: unix:///var/run/docker.sock
   script:
-    - cd frontend && docker build -t $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA .
+    - cd frontend && docker build -t "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" .
