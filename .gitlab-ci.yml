@@ -182,7 +182,7 @@ backend-pytest:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   before_script:
-    - docker info > /dev/null 2>&1 || { echo "ERROR: Docker daemon unreachable at tcp://docker:2375"; exit 1; }
+    - docker info > /dev/null 2>&1 || exit 1
     - if [ -z "$CI_REGISTRY_IMAGE" ]; then export CI_REGISTRY_IMAGE="friday" && echo "CI_REGISTRY_IMAGE not set — using local tag 'friday'"; fi
 
 build-backend-docker:
