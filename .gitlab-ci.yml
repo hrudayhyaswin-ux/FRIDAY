@@ -183,13 +183,7 @@ backend-pytest:
     DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker info > /dev/null 2>&1 || { echo "ERROR: Docker daemon unreachable at tcp://docker:2375"; exit 1; }
-    - |
-      if [ -z "$CI_REGISTRY_IMAGE" ]; then
-        # GitLab Container Registry is not configured for this project.
-        # Use a local-only image name so builds still succeed.
-        export CI_REGISTRY_IMAGE="friday"
-        echo "CI_REGISTRY_IMAGE not set — using local tag 'friday'"
-      fi
+    - if [ -z "$CI_REGISTRY_IMAGE" ]; then export CI_REGISTRY_IMAGE="friday" && echo "CI_REGISTRY_IMAGE not set — using local tag 'friday'"; fi
 
 build-backend-docker:
   <<: *docker-base
