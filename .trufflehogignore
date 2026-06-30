@@ -1,0 +1,23 @@
+# TruffleHog ignore file
+# This file tells trufflehog to skip certain paths during secret scanning.
+
+package-lock.json
+node_modules/
+*.min.js
+*.map
+**/__pycache__/
+backend/venv/
+backend/friday.db
+frontend/.next/
+.git/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.svg
+*.pdf
+*.woff
+*.woff2
+*.eot
+*.ttf

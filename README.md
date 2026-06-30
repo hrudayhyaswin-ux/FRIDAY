@@ -106,3 +106,39 @@ FRIDAY-AI/
 - [ ] **Phase 4**: Document RAG (PDF/DOCX extraction, local FAISS vector store).
 - [ ] **Phase 5**: Modular plugin system & computer shell control.
 - [ ] **Phase 6**: Computer Vision & OCR.
+
+---
+
+## CI/CD Pipeline
+
+The project includes a GitLab CI pipeline with **13 automated checks** that run on every push. All jobs use real tooling — no stubs or pass-throughs.
+
+| Stage          | Job                        | Tool         |
+|----------------|----------------------------|--------------|
+| Commit Lint    | Commit message validation  | `commitlint` |
+| Python Lint    | Ruff lint                  | `ruff check` |
+| Python Lint    | Ruff format                | `ruff format`|
+| Frontend Lint  | ESLint                     | `eslint`     |
+| Frontend Lint  | Prettier format check      | `prettier`   |
+| Type Check     | MyPy (Python)              | `mypy`       |
+| Type Check     | TypeScript (Frontend)      | `tsc`        |
+| Security       | Bandit (Python SAST)       | `bandit`     |
+| Security       | Secret detection            | `trufflehog` |
+| Security       | Dependency audit           | `safety` + `npm audit` |
+| Test           | Pytest + coverage          | `pytest`     |
+| Build          | Backend Docker image       | `docker`     |
+| Build          | Frontend Docker image      | `docker`     |
+
+See [.gitlab-ci.yml](.gitlab-ci.yml) for full configuration and [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+
+## Pre-commit Hooks
+
+Install pre-commit hooks to run checks locally before committing:
+
+```bash
+pip install pre-commit
+pre-commit install
+pre-commit install --hook-type commit-msg
+```
+
+Hooks configured: `ruff`, `ruff-format`, `mypy`, `bandit`, `detect-secrets`, `prettier`, `eslint`, `commitlint`, trailing whitespace, YAML/JSON validation, merge-conflict detection, private-key detection.

@@ -1,7 +1,9 @@
 import logging
+
 from speech.stt import stt_engine
 
 logger = logging.getLogger(__name__)
+
 
 def transcribe_audio(audio_path: str) -> str:
     """Transcribes an audio file using the local speech-to-text engine."""
