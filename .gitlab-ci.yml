@@ -32,6 +32,10 @@ commit-lint:
     - pip install --quiet commitlint-ai 2>/dev/null || pip install --quiet pydantic click 2>/dev/null
   script:
     - |
+      if echo "${CI_COMMIT_TITLE:-$(git log -1 --pretty=%B)}" | grep -qE '^Merge branch'; then
+        echo "Merge commit detected — skipping conventional commit check"
+        exit 0
+      fi
       if [ -n "$CI_COMMIT_TITLE" ]; then
         echo "Validating commit message: $CI_COMMIT_TITLE"
         echo "$CI_COMMIT_TITLE" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+'
