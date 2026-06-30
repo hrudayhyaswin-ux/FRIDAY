@@ -18,7 +18,7 @@ FRIDAY AI is an offline-first personal assistant inspired by Iron Man's virtual 
 FRIDAY-AI/
 ├── frontend/             # Next.js Web UI Console
 │   ├── app/              # App Router Pages & Styles
-│   ├── components/       # Custom React Components (e.g. MarkdownRenderer)
+│   ├── components/       # Custom React Components
 │   └── public/           # Static assets
 │
 ├── backend/              # FastAPI Python Web Server
@@ -26,6 +26,16 @@ FRIDAY-AI/
 │   ├── ai/               # Ollama connection & streaming wrapper
 │   ├── core/             # Settings and configuration
 │   └── venv/             # Python virtual environment
+│
+├── website/              # Futuristic Holographic HUD desktop website
+│   ├── index.html        # Main HUD interface
+│   ├── app.js            # HUD controller logic (voice synth/recognition, UI)
+│   └── canvas.js         # Animated background neural network & core
+│
+├── mobile-app/           # Standalone On-Device Mobile App (Android/iOS)
+│   ├── www/              # Mobile web assets (WebLLM TinyLlama on-device AI)
+│   ├── android/          # Android native Capacitor project
+│   └── ios/              # iOS native Capacitor project
 │
 ├── models/               # Local LLMs / model configs
 ├── documents/            # Target folders for Document Intel (RAG)

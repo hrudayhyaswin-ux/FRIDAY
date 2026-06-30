@@ -33,7 +33,7 @@
 ```bash
 # 1. Clone the repo
 git clone https://github.com/hrudayhyaswin-ux/FRIDAY.git
-cd FRIDAY/friday-mobile
+cd FRIDAY/mobile-app
 
 # 2. Install dependencies
 npm install
@@ -68,7 +68,7 @@ In Android Studio:
 ```bash
 # 1. Clone the repo
 git clone https://github.com/hrudayhyaswin-ux/FRIDAY.git
-cd FRIDAY/friday-mobile
+cd FRIDAY/mobile-app
 
 # 2. Install dependencies
 npm install
@@ -137,7 +137,7 @@ This app requires **zero network connectivity**. All processing happens on-devic
 ## 🏗️ Project Structure
 
 ```
-friday-mobile/
+mobile-app/
 ├── www/                    # Web source (HTML/CSS/JS)
 │   └── index.html          # Main FRIDAY HUD interface
 ├── android/                # Android native project (Capacitor)
